@@ -5,9 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>快传号Agent版</title>
     <style>
-        /* --- 1. 核心变量 (Material 3 风格) --- */
+        /* --- 1. 核心变量 --- */
         :root {
-            /* 浅色模式 */
             --bg-app: #F0F4F9;
             --bg-card: #FFFFFF;
             --text-primary: #1F1F1F;
@@ -18,7 +17,7 @@
             --outline: #E0E3E1;
             --surface-variant: #F0F4F9;
             --ai-highlight: #F2F8FF;
-            --warning-text: #B3261E;
+            --ai-text: #0B57D0;
             --success: #1E8E3E;
             --header-height: 64px;
             --radius: 16px;
@@ -26,7 +25,6 @@
         }
 
         [data-theme="dark"] {
-            /* 深色模式 */
             --bg-app: #131314;
             --bg-card: #1E1F20;
             --text-primary: #E3E3E3;
@@ -37,7 +35,7 @@
             --outline: #444746;
             --surface-variant: #282A2C;
             --ai-highlight: #1F2225;
-            --warning-text: #F2B8B5;
+            --ai-text: #A8C7FA;
             --success: #81C995;
             --shadow: 0 2px 6px rgba(0,0,0,0.4);
         }
@@ -57,29 +55,30 @@
         a { text-decoration: none; color: inherit; }
         .icon { width: 20px; height: 20px; fill: currentColor; vertical-align: middle; }
 
-        /* --- 3. 新手引导 Tooltip --- */
+        /* --- 3. 修复后的 Tooltip --- */
+        .help-container { position: relative; display: inline-flex; align-items: center; }
         .help-icon {
             display: inline-flex; align-items: center; justify-content: center;
             width: 16px; height: 16px; border-radius: 50%;
             background: var(--outline); color: var(--text-secondary);
             font-size: 10px; cursor: help; margin-left: 6px;
-            position: relative;
         }
-        .help-icon:hover::after {
-            content: attr(data-tip);
-            position: absolute; bottom: 120%; left: 50%; transform: translateX(-50%);
-            background: rgba(0,0,0,0.8); color: #fff; padding: 6px 10px;
-            border-radius: 6px; font-size: 12px; white-space: pre-wrap; width: max-content; max-width: 220px;
-            z-index: 100; pointer-events: none;
+        .help-icon:hover + .tooltip-text {
+            opacity: 1; visibility: visible; transform: translateY(0);
+        }
+        .tooltip-text {
+            position: absolute; top: 100%; left: 50%; transform: translateX(-50%) translateY(5px);
+            background: rgba(0,0,0,0.85); color: #fff; padding: 8px 12px;
+            border-radius: 8px; font-size: 12px; line-height: 1.4;
+            width: max-content; max-width: 220px; white-space: normal;
+            z-index: 1000; opacity: 0; visibility: hidden; transition: all 0.2s;
+            pointer-events: none; margin-top: 8px; text-align: left; font-weight: normal;
         }
 
         /* --- 4. 顶部导航 --- */
         .header {
-            height: var(--header-height);
-            background: var(--bg-card);
-            border-bottom: 1px solid var(--outline);
-            display: flex; align-items: center; justify-content: space-between;
-            padding: 0 24px; flex-shrink: 0;
+            height: var(--header-height); background: var(--bg-card); border-bottom: 1px solid var(--outline);
+            display: flex; align-items: center; justify-content: space-between; padding: 0 24px; flex-shrink: 0;
         }
         .logo { font-size: 18px; font-weight: 600; color: var(--text-primary); display: flex; align-items: center; gap: 10px; }
         .header-actions { display: flex; align-items: center; gap: 16px; }
@@ -90,7 +89,7 @@
         /* --- 5. 主布局 --- */
         .main-layout {
             flex: 1; padding: 20px;
-            display: grid; grid-template-columns: 320px 1fr 320px;
+            display: grid; grid-template-columns: 340px 1fr 320px; /* 左侧稍宽以容纳详细分析 */
             gap: 20px; overflow-y: auto;
         }
 
@@ -102,77 +101,77 @@
         }
         .agent-header {
             padding: 16px 20px; border-bottom: 1px solid var(--outline);
-            font-weight: 600; font-size: 15px; display: flex; align-items: center; gap: 8px;
-            background: var(--bg-card);
+            font-weight: 600; font-size: 15px; display: flex; align-items: center;
+            background: var(--bg-card); z-index: 2;
         }
         .agent-body { flex: 1; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 16px; }
 
-        /* --- 模块 1: 每日播报 (回归维度+融合审核) --- */
-        .report-item { border-bottom: 1px solid var(--outline); padding-bottom: 16px; }
-        .report-item:last-child { border-bottom: none; padding-bottom: 0; }
-        .report-title { font-size: 13px; color: var(--text-secondary); margin-bottom: 4px; display: flex; justify-content: space-between; }
-        .report-val { font-size: 20px; font-weight: 700; }
+        /* --- 模块 1: 每日播报 (管家模式) --- */
+        .butler-greeting { font-size: 14px; color: var(--text-primary); margin-bottom: 10px; font-weight: 500; }
         
-        .ai-insight {
-            margin-top: 8px; background: var(--ai-highlight); padding: 10px; border-radius: 8px;
-            font-size: 12px; line-height: 1.5; color: var(--text-secondary); display: flex; gap: 8px;
+        .report-section { display: flex; flex-direction: column; gap: 16px; }
+        .report-card {
+            border: 1px solid var(--outline); border-radius: 12px; padding: 12px;
+            background: var(--surface-variant);
         }
-        .ai-icon { color: var(--primary); flex-shrink: 0; margin-top: 2px; }
-        .audit-warning { color: var(--warning-text); font-weight: 500; margin-top: 4px; display: block; }
+        .report-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+        .report-lbl { font-size: 13px; color: var(--text-secondary); }
+        .report-val { font-size: 18px; font-weight: 700; }
+        
+        /* AI 分析气泡 */
+        .ai-bubble {
+            background: var(--bg-card); border-radius: 8px; padding: 10px;
+            font-size: 12px; color: var(--text-secondary); line-height: 1.5;
+            border-left: 3px solid var(--primary); display: flex; gap: 8px;
+        }
+        .ai-face { font-size: 16px; flex-shrink: 0; }
 
         /* 推荐列表 */
         .rec-list { display: flex; flex-direction: column; gap: 10px; border-top: 1px solid var(--outline); padding-top: 16px; }
-        .rec-item { display: flex; gap: 10px; cursor: pointer; }
-        .rec-tag { font-size: 10px; padding: 2px 6px; border-radius: 4px; height: fit-content; white-space: nowrap; }
+        .rec-item { display: flex; gap: 10px; cursor: pointer; align-items: flex-start; }
+        .rec-tag { font-size: 10px; padding: 2px 6px; border-radius: 4px; height: fit-content; white-space: nowrap; margin-top: 2px; }
         .tag-notice { background: #E3F2FD; color: #1565C0; }
         .tag-course { background: #F3E5F5; color: #7B1FA2; }
         .tag-activity { background: #E8F5E9; color: #2E7D32; }
         .rec-text { font-size: 13px; line-height: 1.4; color: var(--text-primary); }
         .rec-text:hover { color: var(--primary); text-decoration: underline; }
 
-        /* --- 模块 2: 内容创作 (GUI 流程化) --- */
-        /* 步骤容器 */
-        .step-container { display: flex; flex-direction: column; height: 100%; justify-content: center; animation: fadeIn 0.3s; }
-        
-        /* Step 1: 选择体裁 */
-        .type-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-        .type-card {
-            border: 1px solid var(--outline); border-radius: 12px; padding: 24px;
-            text-align: center; cursor: pointer; transition: all 0.2s; background: var(--surface-variant);
+        /* --- 模块 2: 内容创作 (六步流程) --- */
+        .step-indicator {
+            display: flex; justify-content: space-between; margin-bottom: 20px; padding: 0 10px;
         }
-        .type-card:hover { border-color: var(--primary); background: var(--bg-card); box-shadow: var(--shadow); }
+        .step-dot {
+            width: 8px; height: 8px; border-radius: 50%; background: var(--outline);
+            position: relative;
+        }
+        .step-dot.active { background: var(--primary); transform: scale(1.2); }
+        .step-dot.done { background: var(--success); }
+
+        .creation-stage { display: flex; flex-direction: column; height: 100%; animation: fadeIn 0.3s; }
+        .stage-title { font-size: 16px; font-weight: 600; text-align: center; margin-bottom: 20px; }
         
-        /* Step 2: 输入主题 */
-        .input-gui { display: flex; flex-direction: column; gap: 16px; align-items: center; width: 100%; max-width: 400px; margin: 0 auto; }
+        /* 步骤通用样式 */
         .gui-input {
-            width: 100%; padding: 16px; border-radius: 12px; border: 1px solid var(--outline);
-            background: var(--bg-card); color: var(--text-primary); font-size: 15px; outline: none;
+            width: 100%; padding: 14px; border-radius: 12px; border: 1px solid var(--outline);
+            background: var(--bg-card); color: var(--text-primary); font-size: 14px; outline: none; margin-bottom: 16px;
         }
         .gui-input:focus { border-color: var(--primary); }
-        .gui-btn {
+        
+        .ai-preview-box {
+            flex: 1; background: var(--surface-variant); border-radius: 12px; padding: 16px;
+            font-size: 14px; line-height: 1.6; overflow-y: auto; margin-bottom: 16px;
+            border: 1px solid var(--outline); white-space: pre-wrap;
+        }
+        
+        .action-btn {
             width: 100%; padding: 12px; border-radius: 24px; border: none;
             background: var(--primary); color: #fff; font-size: 14px; font-weight: 500; cursor: pointer;
             display: flex; align-items: center; justify-content: center; gap: 8px;
         }
-        .gui-btn:hover { opacity: 0.9; }
-        .back-link { font-size: 13px; color: var(--text-secondary); cursor: pointer; margin-top: 10px; }
-
-        /* Step 3: 预览与发布 */
-        .preview-gui { display: flex; flex-direction: column; gap: 16px; height: 100%; }
-        .preview-card {
-            flex: 1; border: 1px solid var(--outline); border-radius: 12px; overflow: hidden;
-            background: var(--bg-card); display: flex; flex-direction: column;
-        }
-        .preview-header { padding: 12px 16px; background: var(--surface-variant); font-weight: 600; font-size: 14px; border-bottom: 1px solid var(--outline); }
-        .preview-content { padding: 20px; flex: 1; overflow-y: auto; font-size: 14px; line-height: 1.6; }
-        .preview-media { height: 150px; background: #eee; border-radius: 8px; margin-bottom: 16px; display: flex; align-items: center; justify-content: center; color: var(--text-secondary); }
-        
-        /* Step 4: 成功 */
-        .success-view { text-align: center; }
-        .success-icon { width: 64px; height: 64px; color: var(--success); margin-bottom: 16px; }
+        .action-btn:hover { opacity: 0.9; }
+        .action-btn.secondary { background: var(--surface-variant); color: var(--text-primary); margin-top: 10px; }
 
         /* --- 模块 3: 认证/账号 --- */
-        /* 状态A: 认证助手 */
         .auth-view { text-align: center; padding: 20px 0; }
         .upload-box {
             border: 2px dashed var(--outline); border-radius: 12px; padding: 30px 20px;
@@ -180,7 +179,6 @@
         }
         .upload-box:hover { border-color: var(--primary); color: var(--primary); }
         
-        /* 状态B: 账号中心 (无Header) */
         .account-view { display: none; flex-direction: column; gap: 16px; height: 100%; }
         .profile-card { display: flex; align-items: center; gap: 16px; }
         .profile-img { width: 60px; height: 60px; border-radius: 50%; background: #ccc; }
@@ -190,17 +188,19 @@
         }
         .score-val { font-size: 24px; font-weight: 700; color: var(--success); }
 
-        /* --- 模块 4: 客服 --- */
+        /* --- 模块 4: 客服 (热情模式) --- */
+        .cs-chat-box { flex: 1; overflow-y: auto; margin-bottom: 10px; display: flex; flex-direction: column; gap: 12px; font-size: 13px; padding-right: 5px; }
+        .cs-msg { padding: 10px 14px; border-radius: 12px; max-width: 85%; line-height: 1.4; }
+        .cs-msg.sys { background: var(--surface-variant); align-self: flex-start; border-bottom-left-radius: 2px; }
+        .cs-msg.me { background: var(--primary-bg); color: var(--primary); align-self: flex-end; border-bottom-right-radius: 2px; }
+        
         .preset-tags { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
         .tag-chip { font-size: 12px; padding: 6px 12px; border-radius: 16px; background: var(--surface-variant); color: var(--text-secondary); cursor: pointer; }
         .tag-chip:hover { background: var(--primary-bg); color: var(--primary); }
-        .cs-chat-box { flex: 1; overflow-y: auto; margin-bottom: 10px; display: flex; flex-direction: column; gap: 10px; font-size: 13px; }
-        .cs-msg { padding: 8px 12px; border-radius: 8px; max-width: 85%; }
-        .cs-msg.sys { background: var(--surface-variant); align-self: flex-start; }
-        .cs-msg.me { background: var(--primary-bg); color: var(--primary); align-self: flex-end; }
 
         /* 动画 */
         @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
         @media (max-width: 1024px) { .main-layout { grid-template-columns: 1fr; } }
     </style>
@@ -230,40 +230,60 @@
     <!-- 主布局 -->
     <div class="main-layout">
 
-        <!-- 1. 每日播报 Agent -->
+        <!-- 1. 每日播报 Agent (管家模式) -->
         <div class="agent-card">
             <div class="agent-header">
                 <svg class="icon" style="color: var(--primary);" viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/></svg>
                 每日播报 Agent
-                <span class="help-icon" data-tip="每日8:00更新昨日数据与AI建议">?</span>
+                <div class="help-container">
+                    <span class="help-icon">?</span>
+                    <div class="tooltip-text">您的私人数据管家，每日8:00准时汇报昨日数据，并提供基于AI的运营建议。</div>
+                </div>
             </div>
             <div class="agent-body">
-                <!-- 内容维度 (含审核建议) -->
-                <div class="report-item">
-                    <div class="report-title">内容表现 <span style="color:var(--success)">▲ 12%</span></div>
-                    <div class="report-val">12.5k <span style="font-size:12px;font-weight:400;color:var(--text-secondary)">阅读</span></div>
-                    <div class="ai-insight">
-                        <svg class="icon ai-icon" viewBox="0 0 24 24"><path d="M9 21c0 .55.45 1 1 1h4c.55 0 1-.45 1-1v-1H9v1zm3-19C8.14 2 5 5.14 5 9c0 2.38 1.19 4.47 3 5.74V17c0 .55.45 1 1 1h6c.55 0 1-.45 1-1v-2.26c1.81-1.27 3-3.36 3-5.74 0-3.86-3.14-7-7-7z"/></svg>
-                        <div>
-                            AI分析：科技类文章完播率高。
-                            <span class="audit-warning">⚠️ 审核建议：昨日视频疑似包含夸大词汇，建议修改。</span>
+                <div class="butler-greeting">👋 主人，早上好！这是您的昨日战报：</div>
+                
+                <div class="report-section">
+                    <!-- 内容维度 -->
+                    <div class="report-card">
+                        <div class="report-top">
+                            <span class="report-lbl">内容表现</span>
+                            <span class="report-val">12.5k <span style="font-size:12px;color:var(--success)">▲12%</span></span>
+                        </div>
+                        <div class="ai-bubble">
+                            <span class="ai-face">🤖</span>
+                            <div>科技类文章完播率极高。<strong>注意：</strong>昨日视频疑似包含夸大词汇，建议修改标题以防限流。</div>
                         </div>
                     </div>
-                </div>
-                <!-- 粉丝维度 -->
-                <div class="report-item">
-                    <div class="report-title">粉丝增长 <span style="color:var(--success)">▲ 5%</span></div>
-                    <div class="report-val">+892 <span style="font-size:12px;font-weight:400;color:var(--text-secondary)">新增</span></div>
-                </div>
-                <!-- 收益维度 -->
-                <div class="report-item">
-                    <div class="report-title">昨日收益</div>
-                    <div class="report-val">¥ 320.5</div>
+
+                    <!-- 粉丝维度 -->
+                    <div class="report-card">
+                        <div class="report-top">
+                            <span class="report-lbl">粉丝增长</span>
+                            <span class="report-val">+892 <span style="font-size:12px;color:var(--success)">▲5%</span></span>
+                        </div>
+                        <div class="ai-bubble">
+                            <span class="ai-face">📈</span>
+                            <div>新粉多来自视频流，建议发布一条图文动态与新粉互动，提高粘性。</div>
+                        </div>
+                    </div>
+
+                    <!-- 收益维度 -->
+                    <div class="report-card">
+                        <div class="report-top">
+                            <span class="report-lbl">昨日收益</span>
+                            <span class="report-val">¥ 320.5</span>
+                        </div>
+                        <div class="ai-bubble">
+                            <span class="ai-face">💰</span>
+                            <div>CPM 保持稳定，优质原创补贴已到账。</div>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- 推荐列表 -->
                 <div class="rec-list">
-                    <div style="font-size:12px; font-weight:600; color:var(--text-secondary);">情报推荐</div>
+                    <div style="font-size:12px; font-weight:600; color:var(--text-secondary);">管家推荐</div>
                     <div class="rec-item">
                         <span class="rec-tag tag-notice">公告</span>
                         <div class="rec-text">快传号关于打击低质内容的最新规范</div>
@@ -280,81 +300,77 @@
             </div>
         </div>
 
-        <!-- 2. 内容创作 Agent (GUI 流程化) -->
+        <!-- 2. 内容创作 Agent (六步流程) -->
         <div class="agent-card">
             <div class="agent-header">
                 <svg class="icon" style="color: var(--primary);" viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>
                 内容创作 Agent
-                <span class="help-icon" data-tip="AI辅助生成图文或视频，支持一键发布">?</span>
+                <div class="help-container">
+                    <span class="help-icon">?</span>
+                    <div class="tooltip-text">全流程AI辅助：选题 -> 大纲 -> 全文 -> 配图 -> 预览 -> 发布。</div>
+                </div>
             </div>
             <div class="agent-body" style="padding: 0;">
                 
-                <!-- Step 1: 选择体裁 -->
-                <div id="step1" class="step-container" style="padding: 40px;">
-                    <div style="text-align:center; margin-bottom:30px;">
-                        <h3 style="margin-bottom:8px;">开始新的创作</h3>
-                        <p style="font-size:13px; color:var(--text-secondary);">选择体裁，AI 帮您从灵感到发布</p>
-                    </div>
-                    <div class="type-grid">
-                        <div class="type-card" onclick="goToStep2('article')">
-                            <svg class="icon" style="width:40px;height:40px;color:var(--primary);margin-bottom:10px;" viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/></svg>
-                            <div style="font-weight:600;">图文创作</div>
-                            <div style="font-size:12px; color:var(--text-secondary); margin-top:4px;">文章、资讯</div>
-                        </div>
-                        <div class="type-card" onclick="goToStep2('video')">
-                            <svg class="icon" style="width:40px;height:40px;color:var(--primary);margin-bottom:10px;" viewBox="0 0 24 24"><path d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z"/></svg>
-                            <div style="font-weight:600;">视频创作</div>
-                            <div style="font-size:12px; color:var(--text-secondary); margin-top:4px;">短视频、混剪</div>
-                        </div>
+                <!-- 顶部进度条 -->
+                <div style="padding: 20px 20px 0 20px;">
+                    <div class="step-indicator">
+                        <div class="step-dot active" id="dot1"></div>
+                        <div class="step-dot" id="dot2"></div>
+                        <div class="step-dot" id="dot3"></div>
+                        <div class="step-dot" id="dot4"></div>
+                        <div class="step-dot" id="dot5"></div>
+                        <div class="step-dot" id="dot6"></div>
                     </div>
                 </div>
 
-                <!-- Step 2: 输入主题 -->
-                <div id="step2" class="step-container" style="display: none; padding: 40px;">
-                    <div class="input-gui">
-                        <div style="text-align:center;">
-                            <h3 id="step2Title">输入图文主题</h3>
-                            <p style="font-size:13px; color:var(--text-secondary); margin-top:4px;">AI 将为您生成大纲和正文</p>
-                        </div>
-                        <input type="text" class="gui-input" id="topicInput" placeholder="例如：2024年AI手机发展趋势...">
-                        <button class="gui-btn" onclick="goToStep3()">
-                            <svg class="icon" viewBox="0 0 24 24"><path d="M19 9l1.25-2.75L23 5l-2.75-1.25L19 1l-1.25 2.75L15 5l2.75 1.25L19 9zm-7.5.5L9 4 6.5 9.5 1 12l5.5 2.5L9 20l2.5-5.5L17 12l-5.5-2.5zM19 15l-1.25 2.75L15 19l2.75 1.25L19 23l1.25-2.75L23 19l-2.75-1.25L19 15z"/></svg>
-                            开始生成
-                        </button>
-                        <div class="back-link" onclick="backToStep1()">返回上一步</div>
-                    </div>
+                <!-- 阶段 1: 选题 -->
+                <div id="stage1" class="creation-stage" style="padding: 20px;">
+                    <div class="stage-title">第一步：确定选题</div>
+                    <input type="text" class="gui-input" id="topicInput" placeholder="输入您的创作灵感，例如：2024年AI手机发展趋势">
+                    <button class="action-btn" onclick="nextStage(2)">生成大纲</button>
                 </div>
 
-                <!-- Step 3: 预览与发布 -->
-                <div id="step3" class="step-container" style="display: none; padding: 20px;">
-                    <div class="preview-gui">
-                        <div class="preview-card">
-                            <div class="preview-header">
-                                <span id="previewType">图文预览</span>
-                                <span style="font-weight:400; font-size:12px; color:var(--text-secondary); float:right;">AI 生成中...</span>
-                            </div>
-                            <div class="preview-content" id="previewContent">
-                                <div style="text-align:center; padding-top:40px; color:var(--text-secondary);">
-                                    <svg class="icon" style="width:32px;height:32px;animation:spin 1s infinite linear;" viewBox="0 0 24 24"><path d="M12 4V2C6.48 2 2 6.48 2 12h2c0-4.41 3.59-8 8-8zm0 14c-4.41 0-8-3.59-8-8H2c0 5.52 4.48 10 10 10v-2zm8-6h2c0-5.52-4.48-10-10-10v2c4.41 0 8 3.59 8 8zm-2 0c0 3.31-2.69 6-6 6v2c4.42 0 8-3.58 8-8h-2z"/></svg>
-                                    <div style="margin-top:10px;">正在思考并生成内容...</div>
-                                </div>
-                            </div>
-                        </div>
-                        <div style="display:flex; gap:10px;">
-                            <button class="gui-btn" style="background:var(--surface-variant); color:var(--text-primary);" onclick="backToStep1()">取消</button>
-                            <button class="gui-btn" id="publishBtn" onclick="goToStep4()" disabled>发布内容</button>
-                        </div>
-                    </div>
+                <!-- 阶段 2: 大纲 -->
+                <div id="stage2" class="creation-stage" style="display: none; padding: 20px;">
+                    <div class="stage-title">第二步：确认大纲</div>
+                    <div class="ai-preview-box" id="outlineBox">AI 正在思考大纲架构...</div>
+                    <button class="action-btn" onclick="nextStage(3)">生成全文</button>
+                    <button class="action-btn secondary" onclick="prevStage(1)">修改选题</button>
                 </div>
 
-                <!-- Step 4: 成功 -->
-                <div id="step4" class="step-container" style="display: none; padding: 40px;">
-                    <div class="success-view">
-                        <svg class="success-icon" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
-                        <h3>发布成功！</h3>
-                        <p style="font-size:13px; color:var(--text-secondary); margin-top:8px;">您的内容已提交审核，即将进入推荐池。</p>
-                        <button class="gui-btn" style="margin-top:24px; width:auto; padding:10px 30px;" onclick="backToStep1()">继续创作</button>
+                <!-- 阶段 3: 全文 -->
+                <div id="stage3" class="creation-stage" style="display: none; padding: 20px;">
+                    <div class="stage-title">第三步：生成正文</div>
+                    <div class="ai-preview-box" id="contentBox">AI 正在撰写详细内容...</div>
+                    <button class="action-btn" onclick="nextStage(4)">智能配图</button>
+                    <button class="action-btn secondary" onclick="prevStage(2)">调整大纲</button>
+                </div>
+
+                <!-- 阶段 4: 配图 -->
+                <div id="stage4" class="creation-stage" style="display: none; padding: 20px;">
+                    <div class="stage-title">第四步：配图成品</div>
+                    <div class="ai-preview-box" id="imageBox">AI 正在匹配高清素材...</div>
+                    <button class="action-btn" onclick="nextStage(5)">生成预览</button>
+                    <button class="action-btn secondary" onclick="prevStage(3)">修改正文</button>
+                </div>
+
+                <!-- 阶段 5: 预览 -->
+                <div id="stage5" class="creation-stage" style="display: none; padding: 20px;">
+                    <div class="stage-title">第五步：最终预览</div>
+                    <div class="ai-preview-box" id="finalPreview" style="background: #fff; border: 1px solid var(--primary);">
+                        <!-- 最终内容容器 -->
                     </div>
+                    <button class="action-btn" style="background: var(--success);" onclick="nextStage(6)">确认发布</button>
+                    <button class="action-btn secondary" onclick="prevStage(4)">重新配图</button>
+                </div>
+
+                <!-- 阶段 6: 发布成功 -->
+                <div id="stage6" class="creation-stage" style="display: none; padding: 40px; text-align: center; justify-content: center;">
+                    <svg style="width: 64px; height: 64px; color: var(--success); margin: 0 auto 20px;" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" fill="currentColor"/></svg>
+                    <h3>发布成功！</h3>
+                    <p style="color: var(--text-secondary); margin-top: 10px;">您的内容已提交审核，即将分发至推荐流。</p>
+                    <button class="action-btn secondary" style="margin-top: 30px;" onclick="resetCreation()">开始新的创作</button>
                 </div>
 
             </div>
@@ -369,7 +385,10 @@
                 <div class="agent-header" id="authHeader">
                     <svg class="icon" style="color: var(--primary);" viewBox="0 0 24 24"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm-2 16l-4-4 1.41-1.41L10 14.17l6.59-6.59L18 9l-8 8z"/></svg>
                     认证助手 Agent
-                    <span class="help-icon" data-tip="上传材料完成实名认证，解锁更多权益">?</span>
+                    <div class="help-container">
+                        <span class="help-icon">?</span>
+                        <div class="tooltip-text">上传身份材料，完成实名认证后可解锁收益提现、流量扶持等高级权益。</div>
+                    </div>
                 </div>
                 <div class="agent-body" id="authBody">
                     <div class="auth-view">
@@ -409,12 +428,15 @@
                 </div>
             </div>
 
-            <!-- 4. 客服助手 Agent -->
+            <!-- 4. 客服助手 Agent (热情模式) -->
             <div class="agent-card" style="flex: 1;">
                 <div class="agent-header">
                     <svg class="icon" style="color: var(--primary);" viewBox="0 0 24 24"><path d="M21 12.22C21 6.73 16.96 3 12 3 7.03 3 3 6.73 3 12.22c0 5.07 3.57 8.64 8 9.65v-2.1c-3.13-.93-5-3.66-5-6.77 0-3.87 3.13-7 7-7s7 3.13 7 7c0 3.11-1.87 5.84-5 6.77v2.1c4.43-1.01 8-4.58 8-9.65zM12 13c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm1 4h-2v4h2v-4z"/></svg>
                     客服助手 Agent
-                    <span class="help-icon" data-tip="7x24小时智能问答，解决平台使用问题">?</span>
+                    <div class="help-container">
+                        <span class="help-icon">?</span>
+                        <div class="tooltip-text">7x24小时在线，为您解答审核、提现、流量等各类问题。</div>
+                    </div>
                 </div>
                 <div class="agent-body">
                     <div class="preset-tags">
@@ -423,7 +445,7 @@
                         <div class="tag-chip" onclick="askPreset('流量机制')">流量机制</div>
                     </div>
                     <div class="cs-chat-box" id="csChat">
-                        <div class="cs-msg sys">您好，我是智能客服。请问有什么可以帮您？</div>
+                        <!-- 初始欢迎语由 JS 插入 -->
                     </div>
                     <div style="display:flex; gap:8px;">
                         <input type="text" id="csInput" style="flex:1; padding:8px; border-radius:8px; border:1px solid var(--outline); background:var(--bg-card); color:var(--text-primary);" placeholder="输入问题...">
@@ -453,60 +475,58 @@
             }
         }
 
-        // --- 2. 创作 Agent (GUI 流程) ---
-        let currentType = '';
+        // --- 2. 创作 Agent (六步流程逻辑) ---
+        let currentStep = 1;
+        let topic = "";
 
-        function goToStep2(type) {
-            currentType = type;
-            document.getElementById('step1').style.display = 'none';
-            document.getElementById('step2').style.display = 'flex';
-            document.getElementById('step2Title').innerText = `输入${type === 'article' ? '图文' : '视频'}主题`;
+        function updateDots(step) {
+            for(let i=1; i<=6; i++) {
+                const dot = document.getElementById(`dot${i}`);
+                dot.className = 'step-dot';
+                if(i < step) dot.classList.add('done');
+                if(i === step) dot.classList.add('active');
+            }
         }
 
-        function backToStep1() {
-            document.getElementById('step2').style.display = 'none';
-            document.getElementById('step3').style.display = 'none';
-            document.getElementById('step4').style.display = 'none';
-            document.getElementById('step1').style.display = 'flex';
-            document.getElementById('topicInput').value = '';
-        }
-
-        function goToStep3() {
-            const topic = document.getElementById('topicInput').value.trim();
-            if(!topic) return;
-
-            document.getElementById('step2').style.display = 'none';
-            document.getElementById('step3').style.display = 'flex';
-            document.getElementById('previewType').innerText = `${currentType === 'article' ? '图文' : '视频'}预览`;
+        function nextStage(step) {
+            // 隐藏所有
+            for(let i=1; i<=6; i++) {
+                document.getElementById(`stage${i}`).style.display = 'none';
+            }
             
-            // 模拟生成过程
-            const content = document.getElementById('previewContent');
-            content.innerHTML = `
-                <div style="text-align:center; padding-top:40px; color:var(--text-secondary);">
-                    <svg class="icon" style="width:32px;height:32px;animation:spin 1s infinite linear;" viewBox="0 0 24 24"><path d="M12 4V2C6.48 2 2 6.48 2 12h2c0-4.41 3.59-8 8-8zm0 14c-4.41 0-8-3.59-8-8H2c0 5.52 4.48 10 10 10v-2zm8-6h2c0-5.52-4.48-10-10-10v2c4.41 0 8 3.59 8 8zm-2 0c0 3.31-2.69 6-6 6v2c4.42 0 8-3.58 8-8h-2z"/></svg>
-                    <div style="margin-top:10px;">AI 正在生成${currentType === 'article' ? '大纲与正文' : '脚本与画面'}...</div>
-                </div>
-            `;
+            // 显示当前
+            document.getElementById(`stage${step}`).style.display = 'flex';
+            currentStep = step;
+            updateDots(step);
 
-            setTimeout(() => {
-                const mediaIcon = currentType === 'article' 
-                    ? '<svg class="icon" style="width:40px;height:40px;" viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/></svg>'
-                    : '<svg class="icon" style="width:40px;height:40px;" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5v-9l6 4.5-6 4.5z"/></svg>';
-                
-                content.innerHTML = `
-                    <div class="preview-media">${mediaIcon}</div>
-                    <h3>${topic}</h3>
-                    <p style="margin-top:10px; color:var(--text-secondary);">
-                        ${currentType === 'article' ? '这里是AI生成的文章摘要，包含核心观点、数据分析以及行业趋势预测...' : '这里是AI生成的视频脚本，包含分镜描述：[镜头1] 全景展示... [镜头2] 特写...'}
-                    </p>
+            // 逻辑处理
+            if(step === 2) {
+                topic = document.getElementById('topicInput').value;
+                if(!topic) { alert("请输入主题"); prevStage(1); return; }
+                document.getElementById('outlineBox').innerHTML = `AI 正在基于主题“${topic}”构建大纲...<br><br>1. 引言：行业背景分析<br>2. 核心技术突破点<br>3. 市场影响与预测<br>4. 总结`;
+            }
+            if(step === 3) {
+                document.getElementById('contentBox').innerHTML = `AI 正在撰写正文...<br><br>随着人工智能技术的飞速发展，2024年被视为AI手机元年。各大厂商纷纷布局... (已生成 1200 字)`;
+            }
+            if(step === 4) {
+                document.getElementById('imageBox').innerHTML = `AI 正在分析文本并匹配图片...<br><br>✅ 匹配封面图 (科技感/蓝色调)<br>✅ 匹配插图 1 (数据图表)<br>✅ 匹配插图 2 (产品渲染图)`;
+            }
+            if(step === 5) {
+                document.getElementById('finalPreview').innerHTML = `
+                    <div style="width:100%; height:150px; background:#eee; display:flex; align-items:center; justify-content:center; color:#999; margin-bottom:10px;">[封面图预览]</div>
+                    <h3 style="margin-bottom:10px;">${topic}</h3>
+                    <p style="font-size:13px; color:#666;">这里是最终生成的文章预览内容。排版已自动优化，图片已插入合适位置...</p>
                 `;
-                document.getElementById('publishBtn').disabled = false;
-            }, 1500);
+            }
         }
 
-        function goToStep4() {
-            document.getElementById('step3').style.display = 'none';
-            document.getElementById('step4').style.display = 'flex';
+        function prevStage(step) {
+            nextStage(step);
+        }
+
+        function resetCreation() {
+            document.getElementById('topicInput').value = '';
+            nextStage(1);
         }
 
         // --- 3. 认证 -> 账号变形逻辑 ---
@@ -517,15 +537,20 @@
             setTimeout(() => {
                 txt.innerText = "识别成功，提交审核...";
                 setTimeout(() => {
-                    // 隐藏认证界面，显示账号界面
-                    document.getElementById('authHeader').style.display = 'none'; // 隐藏标题
+                    document.getElementById('authHeader').style.display = 'none';
                     document.getElementById('authBody').style.display = 'none';
                     document.getElementById('accountBody').style.display = 'flex';
                 }, 1500);
             }, 1500);
         }
 
-        // --- 4. 客服逻辑 ---
+        // --- 4. 客服逻辑 (热情主动) ---
+        // 初始化欢迎语
+        window.onload = function() {
+            const chat = document.getElementById('csChat');
+            chat.innerHTML = `<div class="cs-msg sys">👋 嗨！我是您的专属客服助手！<br>有什么创作上的烦恼，或者平台规则不清楚的，随时问我哦！✨</div>`;
+        }
+
         function askPreset(q) {
             document.getElementById('csInput').value = q;
             sendCs();
@@ -542,7 +567,11 @@
             chat.scrollTop = chat.scrollHeight;
 
             setTimeout(() => {
-                chat.innerHTML += `<div class="cs-msg sys">收到，Agent正在为您查询相关信息...</div>`;
+                let reply = "收到！这就为您查询 🚀";
+                if(val.includes("提现")) reply = "💰 关于提现：<br>收益满 100 元即可在每月 10-15 号申请提现哦！";
+                if(val.includes("审核")) reply = "⚡️ 审核速度：<br>通常 30 分钟内搞定！如果超过 2 小时，可以把标题发给我，我帮您催催！";
+                
+                chat.innerHTML += `<div class="cs-msg sys">${reply}</div>`;
                 chat.scrollTop = chat.scrollHeight;
             }, 800);
         }
