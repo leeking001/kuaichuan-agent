@@ -1,0 +1,777 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>快传号 Agent 版 - 智能工作台</title>
+    <!-- 引入图标库 -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #0052D9; /* 科技蓝 */
+            --primary-light: #E5F0FF;
+            --secondary-color: #00A870; /* 成功绿 */
+            --bg-color: #F2F3F5;
+            --card-bg: #FFFFFF;
+            --text-main: #1D2129;
+            --text-sub: #86909C;
+            --border-color: #E5E6EB;
+            --shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+            --radius: 12px;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            height: 100vh;
+            display: flex;
+            overflow: hidden;
+        }
+
+        /* 左侧导航栏 */
+        .sidebar {
+            width: 240px;
+            background: var(--card-bg);
+            border-right: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+            z-index: 10;
+        }
+
+        .logo {
+            font-size: 20px;
+            font-weight: bold;
+            color: var(--primary-color);
+            margin-bottom: 40px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .nav-item {
+            padding: 12px 16px;
+            margin-bottom: 8px;
+            border-radius: 8px;
+            cursor: pointer;
+            color: var(--text-sub);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            transition: all 0.3s;
+        }
+
+        .nav-item.active, .nav-item:hover {
+            background-color: var(--primary-light);
+            color: var(--primary-color);
+            font-weight: 500;
+        }
+
+        /* 主内容区 */
+        .main-container {
+            flex: 1;
+            padding: 24px;
+            overflow-y: auto;
+            display: grid;
+            grid-template-columns: 300px 1fr 320px; /* 左 中 右 布局 */
+            grid-template-rows: 100%;
+            gap: 24px;
+            height: 100%;
+        }
+
+        /* 通用卡片样式 */
+        .card {
+            background: var(--card-bg);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            transition: transform 0.2s;
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .card-title {
+            font-size: 16px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .agent-badge {
+            background: linear-gradient(135deg, #0052D9, #00A870);
+            color: white;
+            font-size: 10px;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: normal;
+        }
+
+        /* --- 模块1：每日播报 Agent (左侧) --- */
+        .daily-report-section {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .data-summary {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .data-item {
+            background: #F7F8FA;
+            padding: 12px;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .data-num {
+            font-size: 20px;
+            font-weight: bold;
+            color: var(--text-main);
+            margin: 4px 0;
+        }
+
+        .data-label {
+            font-size: 12px;
+            color: var(--text-sub);
+        }
+
+        .trend {
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+        }
+
+        .trend.up { color: #D03050; } /* 红涨 */
+        .trend.down { color: #00A870; } /* 绿跌 */
+
+        .suggestion-list {
+            list-style: none;
+        }
+
+        .suggestion-item {
+            background: var(--primary-light);
+            border-left: 4px solid var(--primary-color);
+            padding: 12px;
+            border-radius: 4px;
+            margin-bottom: 12px;
+            font-size: 13px;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .suggestion-item:hover {
+            transform: translateX(4px);
+        }
+
+        .suggestion-tag {
+            font-weight: bold;
+            color: var(--primary-color);
+            margin-bottom: 4px;
+            display: block;
+        }
+
+        /* --- 模块2：内容创作 Agent (中间 C位) --- */
+        .creation-agent-section {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            position: relative;
+        }
+
+        .creation-tabs {
+            display: flex;
+            gap: 16px;
+            margin-bottom: 20px;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 10px;
+        }
+
+        .tab-btn {
+            border: none;
+            background: none;
+            font-size: 16px;
+            color: var(--text-sub);
+            cursor: pointer;
+            padding-bottom: 8px;
+            position: relative;
+        }
+
+        .tab-btn.active {
+            color: var(--primary-color);
+            font-weight: 600;
+        }
+
+        .tab-btn.active::after {
+            content: '';
+            position: absolute;
+            bottom: -11px;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: var(--primary-color);
+        }
+
+        .chat-interface {
+            flex: 1;
+            background: #F9FAFB;
+            border-radius: 8px;
+            padding: 20px;
+            overflow-y: auto;
+            margin-bottom: 20px;
+            border: 1px solid var(--border-color);
+        }
+
+        .message {
+            margin-bottom: 16px;
+            display: flex;
+            gap: 12px;
+        }
+
+        .message.ai .avatar {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        .message.user {
+            flex-direction: row-reverse;
+        }
+
+        .message.user .avatar {
+            background: #FF9C19;
+            color: white;
+        }
+
+        .avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            flex-shrink: 0;
+        }
+
+        .bubble {
+            background: white;
+            padding: 12px 16px;
+            border-radius: 12px;
+            border-top-left-radius: 2px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            max-width: 80%;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        .message.user .bubble {
+            background: var(--primary-color);
+            color: white;
+            border-radius: 12px;
+            border-top-right-radius: 2px;
+        }
+
+        .input-area {
+            background: white;
+            border: 1px solid var(--primary-color);
+            border-radius: 8px;
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            box-shadow: 0 0 0 4px rgba(0, 82, 217, 0.1);
+        }
+
+        .input-options {
+            display: flex;
+            gap: 10px;
+        }
+
+        .option-chip {
+            font-size: 12px;
+            padding: 4px 10px;
+            background: #F2F3F5;
+            border-radius: 12px;
+            color: var(--text-sub);
+            cursor: pointer;
+        }
+        
+        .option-chip:hover { background: #E5E6EB; }
+
+        textarea {
+            width: 100%;
+            border: none;
+            resize: none;
+            outline: none;
+            font-size: 14px;
+            height: 60px;
+        }
+
+        .send-btn {
+            align-self: flex-end;
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 8px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .send-btn:hover { background-color: #003CAB; }
+
+        /* --- 模块3 & 4：右侧栏 (认证 & 客服) --- */
+        .right-column {
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        /* 认证 Agent */
+        .auth-card {
+            flex: 0 0 auto; /* 不伸缩 */
+        }
+
+        .auth-status {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .status-icon {
+            width: 48px;
+            height: 48px;
+            background: #FFF1F0;
+            color: #D03050;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+        }
+
+        .status-text h4 { font-size: 14px; margin-bottom: 4px; }
+        .status-text p { font-size: 12px; color: var(--text-sub); }
+
+        .auth-btn {
+            width: 100%;
+            padding: 10px;
+            background: white;
+            border: 1px solid var(--primary-color);
+            color: var(--primary-color);
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        .auth-btn:hover {
+            background: var(--primary-light);
+        }
+
+        /* 客服 Agent */
+        .cs-card {
+            flex: 1; /* 占据剩余空间 */
+            display: flex;
+            flex-direction: column;
+        }
+
+        .cs-chat-window {
+            flex: 1;
+            background: #F7F8FA;
+            border-radius: 8px;
+            padding: 12px;
+            overflow-y: auto;
+            margin-bottom: 12px;
+            font-size: 13px;
+        }
+
+        .cs-input-row {
+            display: flex;
+            gap: 8px;
+        }
+
+        .cs-input {
+            flex: 1;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            padding: 8px;
+            font-size: 12px;
+            outline: none;
+        }
+
+        .cs-send-btn {
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            width: 32px;
+            cursor: pointer;
+        }
+
+        /* 动画效果 */
+        @keyframes pulse {
+            0% { opacity: 0.5; }
+            50% { opacity: 1; }
+            100% { opacity: 0.5; }
+        }
+
+        .typing-indicator {
+            display: inline-block;
+            width: 4px;
+            height: 4px;
+            background: #333;
+            border-radius: 50%;
+            margin: 0 2px;
+            animation: pulse 1s infinite;
+        }
+        
+        .typing-indicator:nth-child(2) { animation-delay: 0.2s; }
+        .typing-indicator:nth-child(3) { animation-delay: 0.4s; }
+
+    </style>
+</head>
+<body>
+
+    <!-- 左侧导航 -->
+    <div class="sidebar">
+        <div class="logo">
+            <i class="fa-solid fa-bolt"></i> 快传号 Agent
+        </div>
+        <div class="nav-item active">
+            <i class="fa-solid fa-house"></i> 工作台
+        </div>
+        <div class="nav-item">
+            <i class="fa-solid fa-pen-nib"></i> 内容管理
+        </div>
+        <div class="nav-item">
+            <i class="fa-solid fa-chart-line"></i> 数据分析
+        </div>
+        <div class="nav-item">
+            <i class="fa-solid fa-wallet"></i> 收益中心
+        </div>
+        <div class="nav-item" style="margin-top: auto;">
+            <i class="fa-solid fa-gear"></i> 设置
+        </div>
+    </div>
+
+    <!-- 主工作区 -->
+    <div class="main-container">
+        
+        <!-- 左列：每日播报 Agent -->
+        <div class="daily-report-section">
+            <div class="card" style="height: 100%;">
+                <div class="card-header">
+                    <div class="card-title">
+                        <i class="fa-solid fa-bullhorn" style="color: var(--primary-color);"></i> 每日播报
+                        <span class="agent-badge">AI</span>
+                    </div>
+                    <i class="fa-solid fa-ellipsis text-sub" style="cursor: pointer; color: #ccc;"></i>
+                </div>
+                
+                <div style="margin-bottom: 16px;">
+                    <p style="font-size: 14px; font-weight: 500;">👋 早上好，创作者！</p>
+                    <p style="font-size: 12px; color: var(--text-sub);">这是您的昨日数据总结</p>
+                </div>
+
+                <div class="data-summary">
+                    <div class="data-item">
+                        <div class="data-label">浏览量</div>
+                        <div class="data-num">12,450</div>
+                        <div class="trend up"><i class="fa-solid fa-arrow-up"></i> 12%</div>
+                    </div>
+                    <div class="data-item">
+                        <div class="data-label">粉丝增长</div>
+                        <div class="data-num">+86</div>
+                        <div class="trend up"><i class="fa-solid fa-arrow-up"></i> 5%</div>
+                    </div>
+                    <div class="data-item">
+                        <div class="data-label">互动量</div>
+                        <div class="data-num">320</div>
+                        <div class="trend down"><i class="fa-solid fa-arrow-down"></i> 2%</div>
+                    </div>
+                    <div class="data-item">
+                        <div class="data-label">预估收益</div>
+                        <div class="data-num">¥ 128.5</div>
+                        <div class="trend up"><i class="fa-solid fa-arrow-up"></i> 8%</div>
+                    </div>
+                </div>
+
+                <div style="margin-top: 10px;">
+                    <p style="font-size: 13px; font-weight: 600; margin-bottom: 10px;">今日行动建议</p>
+                    <ul class="suggestion-list">
+                        <li class="suggestion-item" onclick="fillCreationTopic('AI技术在内容行业的应用')">
+                            <span class="suggestion-tag">🔥 热点追击</span>
+                            建议创作“AI技术变革”相关内容，当前热度极高。
+                        </li>
+                        <li class="suggestion-item">
+                            <span class="suggestion-tag">🏆 活动挑战</span>
+                            参与“夏日Vlog挑战赛”，瓜分百万流量扶持。
+                        </li>
+                        <li class="suggestion-item">
+                            <span class="suggestion-tag">📚 学院推荐</span>
+                            学习《如何提升完播率》，优化视频结构。
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- 中列：内容创作 Agent (核心) -->
+        <div class="creation-agent-section card">
+            <div class="card-header">
+                <div class="card-title">
+                    <i class="fa-solid fa-wand-magic-sparkles" style="color: var(--primary-color);"></i> 创作助手
+                    <span class="agent-badge">Core Agent</span>
+                </div>
+                <div style="font-size: 12px; color: var(--text-sub);">AI 辅助创作中...</div>
+            </div>
+
+            <div class="creation-tabs">
+                <button class="tab-btn active" onclick="switchTab('article')"><i class="fa-regular fa-file-lines"></i> 图文创作</button>
+                <button class="tab-btn" onclick="switchTab('video')"><i class="fa-solid fa-video"></i> 视频生成</button>
+            </div>
+
+            <!-- 聊天/交互区域 -->
+            <div class="chat-interface" id="creationChatBox">
+                <div class="message ai">
+                    <div class="avatar"><i class="fa-solid fa-robot"></i></div>
+                    <div class="bubble">
+                        我是您的内容创作 Agent。您可以：<br>
+                        1. 上传文档自动润色排版<br>
+                        2. 输入选题生成大纲<br>
+                        3. 提供方向自动撰写初稿<br>
+                        请告诉我您想写什么？
+                    </div>
+                </div>
+            </div>
+
+            <!-- 输入区域 -->
+            <div class="input-area">
+                <div class="input-options">
+                    <div class="option-chip"><i class="fa-solid fa-upload"></i> 上传素材</div>
+                    <div class="option-chip"><i class="fa-solid fa-list"></i> 生成大纲</div>
+                    <div class="option-chip"><i class="fa-solid fa-image"></i> 匹配配图</div>
+                </div>
+                <textarea id="creationInput" placeholder="输入选题、大纲或创作方向...（例如：写一篇关于杭州旅游的攻略）"></textarea>
+                <button class="send-btn" onclick="handleCreationSend()">
+                    生成内容 <i class="fa-solid fa-paper-plane"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- 右列：认证 & 客服 -->
+        <div class="right-column">
+            
+            <!-- 认证 Agent -->
+            <div class="card auth-card">
+                <div class="card-header">
+                    <div class="card-title">
+                        <i class="fa-solid fa-id-card" style="color: var(--primary-color);"></i> 认证助手
+                    </div>
+                </div>
+                <div class="auth-status" id="authStatusArea">
+                    <div class="status-icon">
+                        <i class="fa-solid fa-user-shield"></i>
+                    </div>
+                    <div class="status-text">
+                        <h4>未实名认证</h4>
+                        <p>认证后可解锁收益提现功能</p>
+                    </div>
+                </div>
+                <button class="auth-btn" id="authBtn" onclick="startAuth()">开始认证指引</button>
+            </div>
+
+            <!-- 客服 Agent -->
+            <div class="card cs-card">
+                <div class="card-header">
+                    <div class="card-title">
+                        <i class="fa-solid fa-headset" style="color: var(--primary-color);"></i> 客服助手
+                    </div>
+                </div>
+                <div class="cs-chat-window" id="csChatBox">
+                    <div class="message ai">
+                        <div class="bubble" style="padding: 8px 12px; font-size: 12px;">
+                            您好，我是智能客服。遇到任何平台使用问题都可以问我，例如“如何提现”或“推荐机制”。
+                        </div>
+                    </div>
+                </div>
+                <div class="cs-input-row">
+                    <input type="text" class="cs-input" id="csInput" placeholder="遇到什么问题？" onkeypress="handleCsEnter(event)">
+                    <button class="cs-send-btn" onclick="handleCsSend()"><i class="fa-solid fa-arrow-up"></i></button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        // --- 创作 Agent 逻辑 ---
+        function switchTab(type) {
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            const chatBox = document.getElementById('creationChatBox');
+            const msg = type === 'article' 
+                ? "已切换至图文模式。请输入选题或上传文档。" 
+                : "已切换至视频模式。您可以上传素材进行剪辑，或输入脚本生成数字人视频。";
+            
+            appendMessage('ai', msg, chatBox);
+        }
+
+        function handleCreationSend() {
+            const input = document.getElementById('creationInput');
+            const text = input.value.trim();
+            if (!text) return;
+
+            const chatBox = document.getElementById('creationChatBox');
+            
+            // 1. 用户消息
+            appendMessage('user', text, chatBox);
+            input.value = '';
+
+            // 2. 模拟 AI 思考
+            const loadingId = appendLoading(chatBox);
+
+            // 3. 模拟 AI 回复 (延迟 1.5秒)
+            setTimeout(() => {
+                removeLoading(loadingId);
+                const response = `已收到您的选题：<strong>“${text}”</strong>。<br><br>正在为您生成初稿大纲：<br>1. 引言：背景介绍与热点关联<br>2. 核心观点阐述<br>3. 案例分析<br>4. 总结与互动引导<br><br>是否需要基于此大纲生成完整文章？`;
+                appendMessage('ai', response, chatBox);
+                // 滚动到底部
+                chatBox.scrollTop = chatBox.scrollHeight;
+            }, 1500);
+        }
+
+        function fillCreationTopic(topic) {
+            document.getElementById('creationInput').value = topic;
+            // 高亮输入框提示用户
+            document.getElementById('creationInput').focus();
+        }
+
+        // --- 客服 Agent 逻辑 ---
+        function handleCsEnter(e) {
+            if (e.key === 'Enter') handleCsSend();
+        }
+
+        function handleCsSend() {
+            const input = document.getElementById('csInput');
+            const text = input.value.trim();
+            if (!text) return;
+
+            const chatBox = document.getElementById('csChatBox');
+            
+            // 用户消息
+            const userMsg = document.createElement('div');
+            userMsg.className = 'message user';
+            userMsg.innerHTML = `<div class="bubble" style="padding: 8px 12px; font-size: 12px;">${text}</div>`;
+            chatBox.appendChild(userMsg);
+            input.value = '';
+
+            // 模拟回复
+            setTimeout(() => {
+                const aiMsg = document.createElement('div');
+                aiMsg.className = 'message ai';
+                aiMsg.innerHTML = `<div class="bubble" style="padding: 8px 12px; font-size: 12px;">关于“${text}”，您可以查看帮助中心文档：<a href="#" style="color:var(--primary-color)">点击查看详情</a>。或者转接人工客服。</div>`;
+                chatBox.appendChild(aiMsg);
+                chatBox.scrollTop = chatBox.scrollHeight;
+            }, 1000);
+        }
+
+        // --- 认证 Agent 逻辑 ---
+        function startAuth() {
+            const btn = document.getElementById('authBtn');
+            const statusArea = document.getElementById('authStatusArea');
+            
+            btn.innerText = "资料审核中...";
+            btn.disabled = true;
+            btn.style.background = "#F2F3F5";
+            btn.style.color = "#999";
+            btn.style.border = "none";
+
+            statusArea.innerHTML = `
+                <div class="status-icon" style="background: #E8FFEA; color: #00A870;">
+                    <i class="fa-solid fa-spinner fa-spin"></i>
+                </div>
+                <div class="status-text">
+                    <h4>正在校验资料</h4>
+                    <p>Agent 正在OCR识别您的证件...</p>
+                </div>
+            `;
+
+            // 模拟完成
+            setTimeout(() => {
+                statusArea.innerHTML = `
+                    <div class="status-icon" style="background: #E8FFEA; color: #00A870;">
+                        <i class="fa-solid fa-check"></i>
+                    </div>
+                    <div class="status-text">
+                        <h4>资料已提交</h4>
+                        <p>预计 2 小时内完成审核</p>
+                    </div>
+                `;
+                btn.innerText = "查看进度";
+            }, 2000);
+        }
+
+        // --- 通用工具 ---
+        function appendMessage(role, html, container) {
+            const msgDiv = document.createElement('div');
+            msgDiv.className = `message ${role}`;
+            const avatarIcon = role === 'ai' ? '<i class="fa-solid fa-robot"></i>' : '<i class="fa-solid fa-user"></i>';
+            msgDiv.innerHTML = `
+                <div class="avatar">${avatarIcon}</div>
+                <div class="bubble">${html}</div>
+            `;
+            container.appendChild(msgDiv);
+            container.scrollTop = container.scrollHeight;
+        }
+
+        function appendLoading(container) {
+            const id = 'loading-' + Date.now();
+            const msgDiv = document.createElement('div');
+            msgDiv.className = `message ai`;
+            msgDiv.id = id;
+            msgDiv.innerHTML = `
+                <div class="avatar"><i class="fa-solid fa-robot"></i></div>
+                <div class="bubble">
+                    <span class="typing-indicator"></span>
+                    <span class="typing-indicator"></span>
+                    <span class="typing-indicator"></span>
+                </div>
+            `;
+            container.appendChild(msgDiv);
+            container.scrollTop = container.scrollHeight;
+            return id;
+        }
+
+        function removeLoading(id) {
+            const el = document.getElementById(id);
+            if (el) el.remove();
+        }
+    </script>
+</body>
+</html>
