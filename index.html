@@ -2,626 +2,385 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>快传号 Agent 版 - 智能工作台</title>
-    <!-- 引入图标库 -->
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>快传号Agent版</title>
     <style>
+        /* --- 1. 核心变量 (Google Material 3 风格) --- */
         :root {
-            --primary-color: #0052D9; /* 科技蓝 */
-            --primary-light: #E5F0FF;
-            --secondary-color: #00A870; /* 成功绿 */
-            --bg-color: #F2F3F5;
-            --card-bg: #FFFFFF;
-            --text-main: #1D2129;
-            --text-sub: #86909C;
-            --border-color: #E5E6EB;
-            --shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
-            --radius: 12px;
+            /* 浅色模式 (默认) */
+            --bg-app: #F0F4F9;
+            --bg-card: #FFFFFF;
+            --text-primary: #1F1F1F;
+            --text-secondary: #444746;
+            --primary: #0B57D0;
+            --primary-container: #D3E3FD;
+            --on-primary-container: #041E49;
+            --outline: #E0E3E1;
+            --surface-variant: #F0F4F9;
+            
+            --shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            --radius: 16px;
+            --header-height: 60px;
         }
 
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif;
+        /* 深色模式 (自动跟随系统) */
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --bg-app: #131314;
+                --bg-card: #1E1F20;
+                --text-primary: #E3E3E3;
+                --text-secondary: #C4C7C5;
+                --primary: #A8C7FA;
+                --primary-container: #0842A0;
+                --on-primary-container: #D3E3FD;
+                --outline: #444746;
+                --surface-variant: #282A2C;
+            }
         }
 
+        /* --- 2. 全局重置 --- */
+        * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+        
         body {
-            background-color: var(--bg-color);
-            color: var(--text-main);
+            font-family: system-ui, -apple-system, Roboto, "Helvetica Neue", sans-serif;
+            background-color: var(--bg-app);
+            color: var(--text-primary);
             height: 100vh;
             display: flex;
+            flex-direction: column;
             overflow: hidden;
         }
 
-        /* 左侧导航栏 */
-        .sidebar {
-            width: 240px;
-            background: var(--card-bg);
-            border-right: 1px solid var(--border-color);
+        /* --- 3. 顶部导航 --- */
+        .header {
+            height: var(--header-height);
+            background: var(--bg-card);
+            border-bottom: 1px solid var(--outline);
             display: flex;
-            flex-direction: column;
-            padding: 20px;
-            z-index: 10;
+            align-items: center;
+            padding: 0 24px;
+            justify-content: space-between;
+            flex-shrink: 0;
         }
-
         .logo {
-            font-size: 20px;
-            font-weight: bold;
-            color: var(--primary-color);
-            margin-bottom: 40px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
+            font-size: 18px; font-weight: 600; color: var(--text-primary);
+            display: flex; align-items: center; gap: 10px;
         }
+        .logo svg { color: var(--primary); }
 
-        .nav-item {
-            padding: 12px 16px;
-            margin-bottom: 8px;
-            border-radius: 8px;
-            cursor: pointer;
-            color: var(--text-sub);
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            transition: all 0.3s;
-        }
-
-        .nav-item.active, .nav-item:hover {
-            background-color: var(--primary-light);
-            color: var(--primary-color);
-            font-weight: 500;
-        }
-
-        /* 主内容区 */
-        .main-container {
+        /* --- 4. 主布局 (Bento Grid) --- */
+        .main-layout {
             flex: 1;
-            padding: 24px;
-            overflow-y: auto;
+            padding: 20px;
             display: grid;
-            grid-template-columns: 300px 1fr 320px; /* 左 中 右 布局 */
-            grid-template-rows: 100%;
-            gap: 24px;
-            height: 100%;
+            grid-template-columns: 300px 1fr 320px; /* 经典三栏布局 */
+            gap: 20px;
+            overflow-y: auto; /* 允许整体滚动 */
+            min-height: 0;
         }
 
         /* 通用卡片样式 */
-        .card {
-            background: var(--card-bg);
+        .agent-card {
+            background: var(--bg-card);
             border-radius: var(--radius);
-            box-shadow: var(--shadow);
-            padding: 20px;
+            border: 1px solid var(--outline);
             display: flex;
             flex-direction: column;
+            overflow: hidden;
             transition: transform 0.2s;
         }
-
-        .card-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 16px;
-        }
-
-        .card-title {
-            font-size: 16px;
+        .agent-header {
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--outline);
             font-weight: 600;
-            display: flex;
-            align-items: center;
-            gap: 8px;
+            font-size: 15px;
+            display: flex; align-items: center; gap: 8px;
+            background: var(--bg-card);
         }
-
-        .agent-badge {
-            background: linear-gradient(135deg, #0052D9, #00A870);
-            color: white;
-            font-size: 10px;
-            padding: 2px 6px;
-            border-radius: 4px;
-            font-weight: normal;
-        }
-
-        /* --- 模块1：每日播报 Agent (左侧) --- */
-        .daily-report-section {
+        .agent-body {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
             display: flex;
             flex-direction: column;
-            gap: 20px;
         }
 
-        .data-summary {
+        /* --- 模块 1: 每日播报 Agent (左侧) --- */
+        .report-metrics {
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 12px;
             margin-bottom: 20px;
         }
-
-        .data-item {
-            background: #F7F8FA;
+        .metric-box {
+            background: var(--surface-variant);
             padding: 12px;
-            border-radius: 8px;
+            border-radius: 12px;
             text-align: center;
         }
+        .metric-val { font-size: 20px; font-weight: 700; margin-bottom: 4px; }
+        .metric-label { font-size: 12px; color: var(--text-secondary); }
+        .trend { font-size: 11px; display: flex; align-items: center; justify-content: center; gap: 2px; margin-top: 4px; }
+        .trend.up { color: #1E8E3E; }
 
-        .data-num {
-            font-size: 20px;
-            font-weight: bold;
-            color: var(--text-main);
-            margin: 4px 0;
-        }
-
-        .data-label {
-            font-size: 12px;
-            color: var(--text-sub);
-        }
-
-        .trend {
-            font-size: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 4px;
-        }
-
-        .trend.up { color: #D03050; } /* 红涨 */
-        .trend.down { color: #00A870; } /* 绿跌 */
-
-        .suggestion-list {
-            list-style: none;
-        }
-
+        .suggestion-list { display: flex; flex-direction: column; gap: 10px; }
         .suggestion-item {
-            background: var(--primary-light);
-            border-left: 4px solid var(--primary-color);
             padding: 12px;
-            border-radius: 4px;
-            margin-bottom: 12px;
-            font-size: 13px;
+            border: 1px solid var(--outline);
+            border-radius: 12px;
             cursor: pointer;
-            transition: transform 0.2s;
+            transition: background 0.2s;
         }
+        .suggestion-item:hover { background: var(--surface-variant); border-color: var(--primary); }
+        .sug-tag { font-size: 10px; color: var(--primary); background: var(--primary-container); padding: 2px 6px; border-radius: 4px; margin-bottom: 4px; display: inline-block; }
+        .sug-text { font-size: 13px; line-height: 1.4; }
 
-        .suggestion-item:hover {
-            transform: translateX(4px);
+        /* --- 模块 2: 内容创作 Agent (中间 C位) --- */
+        .creator-container {
+            display: flex; flex-direction: column; height: 100%;
         }
-
-        .suggestion-tag {
-            font-weight: bold;
-            color: var(--primary-color);
-            margin-bottom: 4px;
-            display: block;
-        }
-
-        /* --- 模块2：内容创作 Agent (中间 C位) --- */
-        .creation-agent-section {
-            display: flex;
-            flex-direction: column;
-            height: 100%;
-            position: relative;
-        }
-
-        .creation-tabs {
-            display: flex;
-            gap: 16px;
-            margin-bottom: 20px;
-            border-bottom: 1px solid var(--border-color);
-            padding-bottom: 10px;
-        }
-
-        .tab-btn {
-            border: none;
-            background: none;
-            font-size: 16px;
-            color: var(--text-sub);
-            cursor: pointer;
-            padding-bottom: 8px;
-            position: relative;
-        }
-
-        .tab-btn.active {
-            color: var(--primary-color);
-            font-weight: 600;
-        }
-
-        .tab-btn.active::after {
-            content: '';
-            position: absolute;
-            bottom: -11px;
-            left: 0;
-            width: 100%;
-            height: 2px;
-            background: var(--primary-color);
-        }
-
-        .chat-interface {
+        .chat-window {
             flex: 1;
-            background: #F9FAFB;
-            border-radius: 8px;
+            overflow-y: auto;
             padding: 20px;
-            overflow-y: auto;
-            margin-bottom: 20px;
-            border: 1px solid var(--border-color);
+            display: flex; flex-direction: column; gap: 20px;
+            background: var(--surface-variant); /* 稍微区分背景 */
         }
-
-        .message {
-            margin-bottom: 16px;
-            display: flex;
-            gap: 12px;
-        }
-
-        .message.ai .avatar {
-            background: var(--primary-color);
-            color: white;
-        }
-
-        .message.user {
-            flex-direction: row-reverse;
-        }
-
-        .message.user .avatar {
-            background: #FF9C19;
-            color: white;
-        }
-
+        
+        /* 消息气泡 */
+        .msg { display: flex; gap: 12px; max-width: 90%; animation: fadeIn 0.3s; }
+        .msg.user { align-self: flex-end; flex-direction: row-reverse; }
         .avatar {
-            width: 36px;
-            height: 36px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 14px;
-            flex-shrink: 0;
+            width: 32px; height: 32px; border-radius: 50%; flex-shrink: 0;
+            display: flex; align-items: center; justify-content: center;
+            background: var(--bg-card); border: 1px solid var(--outline);
         }
-
+        .msg.ai .avatar { color: var(--primary); }
         .bubble {
-            background: white;
             padding: 12px 16px;
-            border-radius: 12px;
-            border-top-left-radius: 2px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-            max-width: 80%;
-            font-size: 14px;
+            border-radius: 16px;
+            font-size: 15px;
             line-height: 1.6;
+            background: var(--bg-card);
+            box-shadow: var(--shadow);
         }
+        .msg.user .bubble {
+            background: var(--primary);
+            color: #fff;
+            border-bottom-right-radius: 4px;
+        }
+        .msg.ai .bubble { border-top-left-radius: 4px; }
 
-        .message.user .bubble {
-            background: var(--primary-color);
-            color: white;
+        /* 生成结果卡片 */
+        .result-card {
+            margin-top: 10px;
+            border: 1px solid var(--outline);
             border-radius: 12px;
-            border-top-right-radius: 2px;
+            overflow: hidden;
+            background: var(--bg-card);
         }
+        .result-preview {
+            height: 150px;
+            background: #000;
+            display: flex; align-items: center; justify-content: center;
+            color: #fff;
+        }
+        .result-preview.article { background: #E0E3E1; color: var(--text-secondary); }
+        .result-content { padding: 12px; }
+        .result-actions { display: flex; gap: 8px; margin-top: 12px; }
 
+        /* 输入区 */
         .input-area {
-            background: white;
-            border: 1px solid var(--primary-color);
-            border-radius: 8px;
-            padding: 12px;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            box-shadow: 0 0 0 4px rgba(0, 82, 217, 0.1);
+            padding: 16px;
+            background: var(--bg-card);
+            border-top: 1px solid var(--outline);
+            display: flex; gap: 12px;
         }
-
-        .input-options {
-            display: flex;
-            gap: 10px;
+        .mode-select {
+            padding: 0 12px; border-radius: 8px; border: 1px solid var(--outline);
+            background: transparent; color: var(--text-primary); font-size: 13px;
         }
-
-        .option-chip {
-            font-size: 12px;
-            padding: 4px 10px;
-            background: #F2F3F5;
-            border-radius: 12px;
-            color: var(--text-sub);
-            cursor: pointer;
+        .main-input {
+            flex: 1; padding: 10px 16px; border-radius: 24px; border: 1px solid var(--outline);
+            background: var(--surface-variant); color: var(--text-primary); outline: none;
         }
-        
-        .option-chip:hover { background: #E5E6EB; }
-
-        textarea {
-            width: 100%;
-            border: none;
-            resize: none;
-            outline: none;
-            font-size: 14px;
-            height: 60px;
-        }
-
+        .main-input:focus { border-color: var(--primary); background: var(--bg-card); }
         .send-btn {
-            align-self: flex-end;
-            background: var(--primary-color);
-            color: white;
-            border: none;
-            padding: 8px 20px;
-            border-radius: 6px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            gap: 6px;
+            width: 40px; height: 40px; border-radius: 50%; border: none;
+            background: var(--primary); color: #fff; cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
         }
 
-        .send-btn:hover { background-color: #003CAB; }
-
-        /* --- 模块3 & 4：右侧栏 (认证 & 客服) --- */
-        .right-column {
-            display: flex;
-            flex-direction: column;
-            gap: 24px;
+        /* --- 模块 3: 作者认证 Agent (右侧上) --- */
+        .auth-status-box {
+            text-align: center; padding: 20px 0;
         }
-
-        /* 认证 Agent */
-        .auth-card {
-            flex: 0 0 auto; /* 不伸缩 */
+        .auth-icon-lg {
+            width: 60px; height: 60px; margin: 0 auto 12px;
+            border-radius: 50%; background: var(--surface-variant);
+            display: flex; align-items: center; justify-content: center;
+            color: var(--text-secondary); transition: all 0.5s;
         }
-
-        .auth-status {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            margin-bottom: 16px;
-        }
-
-        .status-icon {
-            width: 48px;
-            height: 48px;
-            background: #FFF1F0;
-            color: #D03050;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 20px;
-        }
-
-        .status-text h4 { font-size: 14px; margin-bottom: 4px; }
-        .status-text p { font-size: 12px; color: var(--text-sub); }
-
-        .auth-btn {
-            width: 100%;
-            padding: 10px;
-            background: white;
-            border: 1px solid var(--primary-color);
-            color: var(--primary-color);
-            border-radius: 6px;
-            cursor: pointer;
-            font-weight: 500;
-            transition: all 0.2s;
-        }
-
-        .auth-btn:hover {
-            background: var(--primary-light);
-        }
-
-        /* 客服 Agent */
-        .cs-card {
-            flex: 1; /* 占据剩余空间 */
-            display: flex;
-            flex-direction: column;
-        }
-
-        .cs-chat-window {
-            flex: 1;
-            background: #F7F8FA;
-            border-radius: 8px;
-            padding: 12px;
-            overflow-y: auto;
-            margin-bottom: 12px;
-            font-size: 13px;
-        }
-
-        .cs-input-row {
-            display: flex;
-            gap: 8px;
-        }
-
-        .cs-input {
-            flex: 1;
-            border: 1px solid var(--border-color);
-            border-radius: 4px;
-            padding: 8px;
-            font-size: 12px;
-            outline: none;
-        }
-
-        .cs-send-btn {
-            background: var(--primary-color);
-            color: white;
-            border: none;
-            border-radius: 4px;
-            width: 32px;
-            cursor: pointer;
-        }
-
-        /* 动画效果 */
-        @keyframes pulse {
-            0% { opacity: 0.5; }
-            50% { opacity: 1; }
-            100% { opacity: 0.5; }
-        }
-
-        .typing-indicator {
-            display: inline-block;
-            width: 4px;
-            height: 4px;
-            background: #333;
-            border-radius: 50%;
-            margin: 0 2px;
-            animation: pulse 1s infinite;
-        }
+        .auth-icon-lg.verified { background: #E6F4EA; color: #1E8E3E; }
         
-        .typing-indicator:nth-child(2) { animation-delay: 0.2s; }
-        .typing-indicator:nth-child(3) { animation-delay: 0.4s; }
+        .btn-primary {
+            width: 100%; padding: 10px; border-radius: 20px; border: none;
+            background: var(--primary); color: #fff; font-weight: 500; cursor: pointer;
+            margin-top: 16px;
+        }
+        .btn-primary:disabled { background: var(--outline); cursor: not-allowed; }
 
+        /* --- 模块 4: 客服助手 Agent (右侧下) --- */
+        .cs-chat-list {
+            flex: 1; overflow-y: auto; font-size: 13px;
+            display: flex; flex-direction: column; gap: 10px;
+            margin-bottom: 10px;
+        }
+        .cs-msg { padding: 8px 12px; border-radius: 8px; max-width: 90%; }
+        .cs-msg.sys { background: var(--surface-variant); align-self: flex-start; }
+        .cs-msg.me { background: var(--primary-container); color: var(--on-primary-container); align-self: flex-end; }
+        
+        .cs-input-row { display: flex; gap: 8px; }
+        .cs-input {
+            flex: 1; padding: 6px 10px; border-radius: 8px; border: 1px solid var(--outline);
+            background: var(--bg-card); color: var(--text-primary);
+        }
+
+        /* --- 响应式适配 --- */
+        @media (max-width: 1024px) {
+            .main-layout {
+                grid-template-columns: 1fr; /* 移动端单栏 */
+                grid-template-rows: auto auto auto auto;
+            }
+            /* 调整顺序：播报 -> 创作 -> 认证 -> 客服 */
+            .agent-card:nth-child(1) { order: 1; } /* 播报 */
+            .agent-card:nth-child(2) { order: 2; min-height: 500px; } /* 创作 */
+            .agent-card:nth-child(3) { order: 3; } /* 认证 */
+            .agent-card:nth-child(4) { order: 4; min-height: 300px; } /* 客服 */
+        }
+
+        /* 动画 */
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        /* SVG Icons */
+        .icon { width: 20px; height: 20px; fill: currentColor; }
     </style>
 </head>
 <body>
 
-    <!-- 左侧导航 -->
-    <div class="sidebar">
+    <!-- 顶部 -->
+    <header class="header">
         <div class="logo">
-            <i class="fa-solid fa-bolt"></i> 快传号 Agent
+            <svg class="icon" viewBox="0 0 24 24"><path d="M11 21h-1l1-7H7.5c-.58 0-.57-.32-.29-.62L10.5 5.8c.19-.3.49-.8 1.07-.8h1l-1 7h3.5c.58 0 .57.32.29.62L11.5 20.2c-.19.3-.49.8-1.07.8z"/></svg>
+            快传号Agent版
         </div>
-        <div class="nav-item active">
-            <i class="fa-solid fa-house"></i> 工作台
+        <div style="display: flex; gap: 16px; align-items: center;">
+            <div style="width: 32px; height: 32px; background: var(--outline); border-radius: 50%; overflow: hidden;">
+                <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Felix" width="32">
+            </div>
         </div>
-        <div class="nav-item">
-            <i class="fa-solid fa-pen-nib"></i> 内容管理
-        </div>
-        <div class="nav-item">
-            <i class="fa-solid fa-chart-line"></i> 数据分析
-        </div>
-        <div class="nav-item">
-            <i class="fa-solid fa-wallet"></i> 收益中心
-        </div>
-        <div class="nav-item" style="margin-top: auto;">
-            <i class="fa-solid fa-gear"></i> 设置
-        </div>
-    </div>
+    </header>
 
-    <!-- 主工作区 -->
-    <div class="main-container">
-        
-        <!-- 左列：每日播报 Agent -->
-        <div class="daily-report-section">
-            <div class="card" style="height: 100%;">
-                <div class="card-header">
-                    <div class="card-title">
-                        <i class="fa-solid fa-bullhorn" style="color: var(--primary-color);"></i> 每日播报
-                        <span class="agent-badge">AI</span>
-                    </div>
-                    <i class="fa-solid fa-ellipsis text-sub" style="cursor: pointer; color: #ccc;"></i>
-                </div>
-                
-                <div style="margin-bottom: 16px;">
-                    <p style="font-size: 14px; font-weight: 500;">👋 早上好，创作者！</p>
-                    <p style="font-size: 12px; color: var(--text-sub);">这是您的昨日数据总结</p>
-                </div>
+    <!-- 主布局 -->
+    <div class="main-layout">
 
-                <div class="data-summary">
-                    <div class="data-item">
-                        <div class="data-label">浏览量</div>
-                        <div class="data-num">12,450</div>
-                        <div class="trend up"><i class="fa-solid fa-arrow-up"></i> 12%</div>
+        <!-- 1. 每日播报 Agent -->
+        <div class="agent-card">
+            <div class="agent-header">
+                <svg class="icon" style="color: var(--primary);" viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/></svg>
+                每日播报 Agent
+            </div>
+            <div class="agent-body">
+                <div class="report-metrics">
+                    <div class="metric-box">
+                        <div class="metric-val">12.5k</div>
+                        <div class="metric-label">昨日阅读</div>
+                        <div class="trend up">▲ 12%</div>
                     </div>
-                    <div class="data-item">
-                        <div class="data-label">粉丝增长</div>
-                        <div class="data-num">+86</div>
-                        <div class="trend up"><i class="fa-solid fa-arrow-up"></i> 5%</div>
-                    </div>
-                    <div class="data-item">
-                        <div class="data-label">互动量</div>
-                        <div class="data-num">320</div>
-                        <div class="trend down"><i class="fa-solid fa-arrow-down"></i> 2%</div>
-                    </div>
-                    <div class="data-item">
-                        <div class="data-label">预估收益</div>
-                        <div class="data-num">¥ 128.5</div>
-                        <div class="trend up"><i class="fa-solid fa-arrow-up"></i> 8%</div>
+                    <div class="metric-box">
+                        <div class="metric-val">¥320</div>
+                        <div class="metric-label">预估收益</div>
+                        <div class="trend up">▲ 5%</div>
                     </div>
                 </div>
-
-                <div style="margin-top: 10px;">
-                    <p style="font-size: 13px; font-weight: 600; margin-bottom: 10px;">今日行动建议</p>
-                    <ul class="suggestion-list">
-                        <li class="suggestion-item" onclick="fillCreationTopic('AI技术在内容行业的应用')">
-                            <span class="suggestion-tag">🔥 热点追击</span>
-                            建议创作“AI技术变革”相关内容，当前热度极高。
-                        </li>
-                        <li class="suggestion-item">
-                            <span class="suggestion-tag">🏆 活动挑战</span>
-                            参与“夏日Vlog挑战赛”，瓜分百万流量扶持。
-                        </li>
-                        <li class="suggestion-item">
-                            <span class="suggestion-tag">📚 学院推荐</span>
-                            学习《如何提升完播率》，优化视频结构。
-                        </li>
-                    </ul>
+                <div style="font-size: 12px; color: var(--text-secondary); margin-bottom: 8px;">今日建议 (点击执行):</div>
+                <div class="suggestion-list">
+                    <div class="suggestion-item" onclick="triggerCreator('article', 'AI手机发展趋势')">
+                        <span class="sug-tag">热点</span>
+                        <div class="sug-text">生成“AI手机”深度解析文章</div>
+                    </div>
+                    <div class="suggestion-item" onclick="triggerCreator('video', '数码开箱挑战')">
+                        <span class="sug-tag">活动</span>
+                        <div class="sug-text">参与“数码开箱”视频挑战</div>
+                    </div>
                 </div>
             </div>
         </div>
 
-        <!-- 中列：内容创作 Agent (核心) -->
-        <div class="creation-agent-section card">
-            <div class="card-header">
-                <div class="card-title">
-                    <i class="fa-solid fa-wand-magic-sparkles" style="color: var(--primary-color);"></i> 创作助手
-                    <span class="agent-badge">Core Agent</span>
-                </div>
-                <div style="font-size: 12px; color: var(--text-sub);">AI 辅助创作中...</div>
+        <!-- 2. 内容创作 Agent (核心) -->
+        <div class="agent-card">
+            <div class="agent-header">
+                <svg class="icon" style="color: var(--primary);" viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>
+                内容创作 Agent
             </div>
-
-            <div class="creation-tabs">
-                <button class="tab-btn active" onclick="switchTab('article')"><i class="fa-regular fa-file-lines"></i> 图文创作</button>
-                <button class="tab-btn" onclick="switchTab('video')"><i class="fa-solid fa-video"></i> 视频生成</button>
-            </div>
-
-            <!-- 聊天/交互区域 -->
-            <div class="chat-interface" id="creationChatBox">
-                <div class="message ai">
-                    <div class="avatar"><i class="fa-solid fa-robot"></i></div>
-                    <div class="bubble">
-                        我是您的内容创作 Agent。您可以：<br>
-                        1. 上传文档自动润色排版<br>
-                        2. 输入选题生成大纲<br>
-                        3. 提供方向自动撰写初稿<br>
-                        请告诉我您想写什么？
+            <div class="agent-body" style="padding: 0;">
+                <div class="chat-window" id="chatWindow">
+                    <div class="msg ai">
+                        <div class="avatar"><svg class="icon" viewBox="0 0 24 24"><path d="M19 9l1.25-2.75L23 5l-2.75-1.25L19 1l-1.25 2.75L15 5l2.75 1.25L19 9zm-7.5.5L9 4 6.5 9.5 1 12l5.5 2.5L9 20l2.5-5.5L17 12l-5.5-2.5zM19 15l-1.25 2.75L15 19l2.75 1.25L19 23l1.25-2.75L23 19l-2.75-1.25L19 15z"/></svg></div>
+                        <div class="bubble">我是您的创作助手。请选择模式并输入主题，我将为您生成内容。</div>
                     </div>
                 </div>
-            </div>
-
-            <!-- 输入区域 -->
-            <div class="input-area">
-                <div class="input-options">
-                    <div class="option-chip"><i class="fa-solid fa-upload"></i> 上传素材</div>
-                    <div class="option-chip"><i class="fa-solid fa-list"></i> 生成大纲</div>
-                    <div class="option-chip"><i class="fa-solid fa-image"></i> 匹配配图</div>
+                <div class="input-area">
+                    <select class="mode-select" id="createMode">
+                        <option value="article">图文</option>
+                        <option value="video">视频</option>
+                    </select>
+                    <input type="text" class="main-input" id="createInput" placeholder="输入创作主题..." onkeypress="handleEnter(event)">
+                    <button class="send-btn" onclick="startCreation()">
+                        <svg class="icon" viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+                    </button>
                 </div>
-                <textarea id="creationInput" placeholder="输入选题、大纲或创作方向...（例如：写一篇关于杭州旅游的攻略）"></textarea>
-                <button class="send-btn" onclick="handleCreationSend()">
-                    生成内容 <i class="fa-solid fa-paper-plane"></i>
-                </button>
             </div>
         </div>
 
-        <!-- 右列：认证 & 客服 -->
-        <div class="right-column">
+        <!-- 右侧栏容器 -->
+        <div style="display: flex; flex-direction: column; gap: 20px;">
             
-            <!-- 认证 Agent -->
-            <div class="card auth-card">
-                <div class="card-header">
-                    <div class="card-title">
-                        <i class="fa-solid fa-id-card" style="color: var(--primary-color);"></i> 认证助手
+            <!-- 3. 作者认证 Agent -->
+            <div class="agent-card">
+                <div class="agent-header">
+                    <svg class="icon" style="color: var(--primary);" viewBox="0 0 24 24"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm-2 16l-4-4 1.41-1.41L10 14.17l6.59-6.59L18 9l-8 8z"/></svg>
+                    作者认证 Agent
+                </div>
+                <div class="agent-body">
+                    <div class="auth-status-box">
+                        <div class="auth-icon-lg" id="authIcon">
+                            <svg class="icon" style="width:32px;height:32px;" viewBox="0 0 24 24"><path d="M20 7h-5V4c0-1.1-.9-2-2-2h-2c-1.1 0-2 .9-2 2v3H4c-1.1 0-2 .9-2 2v11c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V9c0-1.1-.9-2-2-2zM9 4h6v3H9V4zm11 15H4V9h16v10zm-9-8h2v2h-2zm0 4h2v2h-2z"/></svg>
+                        </div>
+                        <h3 id="authTitle">未认证</h3>
+                        <p style="font-size: 12px; color: var(--text-secondary); margin-top: 4px;">认证后解锁收益提现</p>
+                        <button class="btn-primary" id="authBtn" onclick="processAuth()">开始身份认证</button>
                     </div>
                 </div>
-                <div class="auth-status" id="authStatusArea">
-                    <div class="status-icon">
-                        <i class="fa-solid fa-user-shield"></i>
-                    </div>
-                    <div class="status-text">
-                        <h4>未实名认证</h4>
-                        <p>认证后可解锁收益提现功能</p>
-                    </div>
-                </div>
-                <button class="auth-btn" id="authBtn" onclick="startAuth()">开始认证指引</button>
             </div>
 
-            <!-- 客服 Agent -->
-            <div class="card cs-card">
-                <div class="card-header">
-                    <div class="card-title">
-                        <i class="fa-solid fa-headset" style="color: var(--primary-color);"></i> 客服助手
-                    </div>
+            <!-- 4. 客服助手 Agent -->
+            <div class="agent-card" style="flex: 1;">
+                <div class="agent-header">
+                    <svg class="icon" style="color: var(--primary);" viewBox="0 0 24 24"><path d="M21 12.22C21 6.73 16.96 3 12 3 7.03 3 3 6.73 3 12.22c0 5.07 3.57 8.64 8 9.65v-2.1c-3.13-.93-5-3.66-5-6.77 0-3.87 3.13-7 7-7s7 3.13 7 7c0 3.11-1.87 5.84-5 6.77v2.1c4.43-1.01 8-4.58 8-9.65zM12 13c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm1 4h-2v4h2v-4z"/></svg>
+                    客服助手 Agent
                 </div>
-                <div class="cs-chat-window" id="csChatBox">
-                    <div class="message ai">
-                        <div class="bubble" style="padding: 8px 12px; font-size: 12px;">
-                            您好，我是智能客服。遇到任何平台使用问题都可以问我，例如“如何提现”或“推荐机制”。
-                        </div>
+                <div class="agent-body">
+                    <div class="cs-chat-list" id="csList">
+                        <div class="cs-msg sys">您好，我是智能客服。</div>
                     </div>
-                </div>
-                <div class="cs-input-row">
-                    <input type="text" class="cs-input" id="csInput" placeholder="遇到什么问题？" onkeypress="handleCsEnter(event)">
-                    <button class="cs-send-btn" onclick="handleCsSend()"><i class="fa-solid fa-arrow-up"></i></button>
+                    <div class="cs-input-row">
+                        <input type="text" class="cs-input" id="csInput" placeholder="提问...">
+                        <button onclick="sendCs()" style="border:none; background:transparent; color:var(--primary); cursor:pointer;">
+                            <svg class="icon" viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+                        </button>
+                    </div>
                 </div>
             </div>
 
@@ -629,148 +388,154 @@
     </div>
 
     <script>
-        // --- 创作 Agent 逻辑 ---
-        function switchTab(type) {
-            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
-            event.target.classList.add('active');
+        // --- 1. 每日播报联动逻辑 ---
+        function triggerCreator(mode, topic) {
+            // 1. 设置模式
+            const select = document.getElementById('createMode');
+            select.value = mode;
             
-            const chatBox = document.getElementById('creationChatBox');
-            const msg = type === 'article' 
-                ? "已切换至图文模式。请输入选题或上传文档。" 
-                : "已切换至视频模式。您可以上传素材进行剪辑，或输入脚本生成数字人视频。";
+            // 2. 填入内容
+            const input = document.getElementById('createInput');
+            input.value = topic;
             
-            appendMessage('ai', msg, chatBox);
+            // 3. 视觉反馈：高亮输入框
+            input.focus();
+            input.style.borderColor = 'var(--primary)';
+            setTimeout(() => input.style.borderColor = 'var(--outline)', 1000);
+            
+            // 4. 自动触发
+            startCreation();
         }
 
-        function handleCreationSend() {
-            const input = document.getElementById('creationInput');
-            const text = input.value.trim();
-            if (!text) return;
+        // --- 2. 内容创作逻辑 (完整模拟) ---
+        function handleEnter(e) {
+            if(e.key === 'Enter') startCreation();
+        }
 
-            const chatBox = document.getElementById('creationChatBox');
-            
-            // 1. 用户消息
-            appendMessage('user', text, chatBox);
+        function startCreation() {
+            const input = document.getElementById('createInput');
+            const topic = input.value.trim();
+            const mode = document.getElementById('createMode').value;
+            if(!topic) return;
+
+            const chat = document.getElementById('chatWindow');
+
+            // 用户消息
+            chat.innerHTML += `
+                <div class="msg user">
+                    <div class="avatar"><svg class="icon" viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg></div>
+                    <div class="bubble">${topic}</div>
+                </div>
+            `;
             input.value = '';
+            chat.scrollTop = chat.scrollHeight;
 
-            // 2. 模拟 AI 思考
-            const loadingId = appendLoading(chatBox);
+            // AI 思考中
+            const loadingId = 'loading-' + Date.now();
+            chat.innerHTML += `
+                <div class="msg ai" id="${loadingId}">
+                    <div class="avatar"><svg class="icon" viewBox="0 0 24 24"><path d="M19 9l1.25-2.75L23 5l-2.75-1.25L19 1l-1.25 2.75L15 5l2.75 1.25L19 9zm-7.5.5L9 4 6.5 9.5 1 12l5.5 2.5L9 20l2.5-5.5L17 12l-5.5-2.5zM19 15l-1.25 2.75L15 19l2.75 1.25L19 23l1.25-2.75L23 19l-2.75-1.25L19 15z"/></svg></div>
+                    <div class="bubble">
+                        <svg class="icon" style="animation: spin 1s infinite linear;" viewBox="0 0 24 24"><path d="M12 4V2C6.48 2 2 6.48 2 12h2c0-4.41 3.59-8 8-8zm0 14c-4.41 0-8-3.59-8-8H2c0 5.52 4.48 10 10 10v-2zm8-6h2c0-5.52-4.48-10-10-10v2c4.41 0 8 3.59 8 8zm-2 0c0 3.31-2.69 6-6 6v2c4.42 0 8-3.58 8-8h-2z"/></svg>
+                        正在生成${mode === 'article' ? '图文' : '视频'}内容...
+                    </div>
+                </div>
+            `;
+            chat.scrollTop = chat.scrollHeight;
 
-            // 3. 模拟 AI 回复 (延迟 1.5秒)
+            // 模拟生成延迟
             setTimeout(() => {
-                removeLoading(loadingId);
-                const response = `已收到您的选题：<strong>“${text}”</strong>。<br><br>正在为您生成初稿大纲：<br>1. 引言：背景介绍与热点关联<br>2. 核心观点阐述<br>3. 案例分析<br>4. 总结与互动引导<br><br>是否需要基于此大纲生成完整文章？`;
-                appendMessage('ai', response, chatBox);
-                // 滚动到底部
-                chatBox.scrollTop = chatBox.scrollHeight;
+                document.getElementById(loadingId).remove();
+                
+                let resultHtml = '';
+                if(mode === 'article') {
+                    resultHtml = `
+                        <div class="result-card">
+                            <div class="result-preview article">
+                                <svg class="icon" style="width:48px;height:48px;opacity:0.5;" viewBox="0 0 24 24"><path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/></svg>
+                            </div>
+                            <div class="result-content">
+                                <div style="font-weight:600; margin-bottom:4px;">${topic} - 深度解析</div>
+                                <div style="font-size:12px; color:var(--text-secondary);">已生成 1500 字，包含 3 张配图。</div>
+                                <div class="result-actions">
+                                    <button onclick="publish(this)" style="background:var(--primary); color:#fff; border:none; padding:6px 12px; border-radius:12px; cursor:pointer;">发布</button>
+                                    <button style="background:transparent; border:1px solid var(--outline); color:var(--text-primary); padding:6px 12px; border-radius:12px; cursor:pointer;">编辑</button>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    resultHtml = `
+                        <div class="result-card">
+                            <div class="result-preview">
+                                <svg class="icon" style="width:48px;height:48px;" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5v-9l6 4.5-6 4.5z"/></svg>
+                            </div>
+                            <div class="result-content">
+                                <div style="font-weight:600; margin-bottom:4px;">${topic} - 短视频</div>
+                                <div style="font-size:12px; color:var(--text-secondary);">时长 00:45，数字人播报已就绪。</div>
+                                <div class="result-actions">
+                                    <button onclick="publish(this)" style="background:var(--primary); color:#fff; border:none; padding:6px 12px; border-radius:12px; cursor:pointer;">发布</button>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }
+
+                chat.innerHTML += `
+                    <div class="msg ai">
+                        <div class="avatar"><svg class="icon" viewBox="0 0 24 24"><path d="M19 9l1.25-2.75L23 5l-2.75-1.25L19 1l-1.25 2.75L15 5l2.75 1.25L19 9zm-7.5.5L9 4 6.5 9.5 1 12l5.5 2.5L9 20l2.5-5.5L17 12l-5.5-2.5zM19 15l-1.25 2.75L15 19l2.75 1.25L19 23l1.25-2.75L23 19l-2.75-1.25L19 15z"/></svg></div>
+                        <div style="width:100%">${resultHtml}</div>
+                    </div>
+                `;
+                chat.scrollTop = chat.scrollHeight;
             }, 1500);
         }
 
-        function fillCreationTopic(topic) {
-            document.getElementById('creationInput').value = topic;
-            // 高亮输入框提示用户
-            document.getElementById('creationInput').focus();
-        }
-
-        // --- 客服 Agent 逻辑 ---
-        function handleCsEnter(e) {
-            if (e.key === 'Enter') handleCsSend();
-        }
-
-        function handleCsSend() {
-            const input = document.getElementById('csInput');
-            const text = input.value.trim();
-            if (!text) return;
-
-            const chatBox = document.getElementById('csChatBox');
-            
-            // 用户消息
-            const userMsg = document.createElement('div');
-            userMsg.className = 'message user';
-            userMsg.innerHTML = `<div class="bubble" style="padding: 8px 12px; font-size: 12px;">${text}</div>`;
-            chatBox.appendChild(userMsg);
-            input.value = '';
-
-            // 模拟回复
+        function publish(btn) {
+            const originalText = btn.innerText;
+            btn.innerText = "发布中...";
+            btn.disabled = true;
             setTimeout(() => {
-                const aiMsg = document.createElement('div');
-                aiMsg.className = 'message ai';
-                aiMsg.innerHTML = `<div class="bubble" style="padding: 8px 12px; font-size: 12px;">关于“${text}”，您可以查看帮助中心文档：<a href="#" style="color:var(--primary-color)">点击查看详情</a>。或者转接人工客服。</div>`;
-                chatBox.appendChild(aiMsg);
-                chatBox.scrollTop = chatBox.scrollHeight;
+                btn.innerText = "已发布";
+                btn.style.background = "#1E8E3E";
             }, 1000);
         }
 
-        // --- 认证 Agent 逻辑 ---
-        function startAuth() {
+        // --- 3. 认证 Agent 逻辑 ---
+        function processAuth() {
             const btn = document.getElementById('authBtn');
-            const statusArea = document.getElementById('authStatusArea');
+            const icon = document.getElementById('authIcon');
+            const title = document.getElementById('authTitle');
             
-            btn.innerText = "资料审核中...";
+            btn.innerText = "正在OCR扫描证件...";
             btn.disabled = true;
-            btn.style.background = "#F2F3F5";
-            btn.style.color = "#999";
-            btn.style.border = "none";
-
-            statusArea.innerHTML = `
-                <div class="status-icon" style="background: #E8FFEA; color: #00A870;">
-                    <i class="fa-solid fa-spinner fa-spin"></i>
-                </div>
-                <div class="status-text">
-                    <h4>正在校验资料</h4>
-                    <p>Agent 正在OCR识别您的证件...</p>
-                </div>
-            `;
-
-            // 模拟完成
+            
             setTimeout(() => {
-                statusArea.innerHTML = `
-                    <div class="status-icon" style="background: #E8FFEA; color: #00A870;">
-                        <i class="fa-solid fa-check"></i>
-                    </div>
-                    <div class="status-text">
-                        <h4>资料已提交</h4>
-                        <p>预计 2 小时内完成审核</p>
-                    </div>
-                `;
-                btn.innerText = "查看进度";
-            }, 2000);
+                btn.innerText = "正在核验...";
+                setTimeout(() => {
+                    icon.innerHTML = '<svg class="icon" style="width:32px;height:32px;" viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>';
+                    icon.classList.add('verified');
+                    title.innerText = "已认证";
+                    btn.style.display = 'none';
+                }, 1500);
+            }, 1500);
         }
 
-        // --- 通用工具 ---
-        function appendMessage(role, html, container) {
-            const msgDiv = document.createElement('div');
-            msgDiv.className = `message ${role}`;
-            const avatarIcon = role === 'ai' ? '<i class="fa-solid fa-robot"></i>' : '<i class="fa-solid fa-user"></i>';
-            msgDiv.innerHTML = `
-                <div class="avatar">${avatarIcon}</div>
-                <div class="bubble">${html}</div>
-            `;
-            container.appendChild(msgDiv);
-            container.scrollTop = container.scrollHeight;
-        }
-
-        function appendLoading(container) {
-            const id = 'loading-' + Date.now();
-            const msgDiv = document.createElement('div');
-            msgDiv.className = `message ai`;
-            msgDiv.id = id;
-            msgDiv.innerHTML = `
-                <div class="avatar"><i class="fa-solid fa-robot"></i></div>
-                <div class="bubble">
-                    <span class="typing-indicator"></span>
-                    <span class="typing-indicator"></span>
-                    <span class="typing-indicator"></span>
-                </div>
-            `;
-            container.appendChild(msgDiv);
-            container.scrollTop = container.scrollHeight;
-            return id;
-        }
-
-        function removeLoading(id) {
-            const el = document.getElementById(id);
-            if (el) el.remove();
+        // --- 4. 客服 Agent 逻辑 ---
+        function sendCs() {
+            const input = document.getElementById('csInput');
+            const val = input.value.trim();
+            if(!val) return;
+            
+            const list = document.getElementById('csList');
+            list.innerHTML += `<div class="cs-msg me">${val}</div>`;
+            input.value = '';
+            list.scrollTop = list.scrollHeight;
+            
+            setTimeout(() => {
+                list.innerHTML += `<div class="cs-msg sys">收到，Agent正在为您查询...</div>`;
+                list.scrollTop = list.scrollHeight;
+            }, 1000);
         }
     </script>
 </body>
