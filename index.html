@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>快传号Agent版</title>
     <style>
-        /* --- 1. 核心变量 (Material 3) --- */
+        /* --- 1. 核心变量 (Material 3 风格) --- */
         :root {
             /* 浅色模式 */
             --bg-app: #F0F4F9;
@@ -17,8 +17,8 @@
             --primary-bg: #D3E3FD;
             --outline: #E0E3E1;
             --surface-variant: #F0F4F9;
-            --ai-highlight: #F2F8FF;
-            --ai-text: #0B57D0;
+            --warning-bg: #FFEBEE;
+            --warning-text: #C62828;
             --success: #1E8E3E;
             --header-height: 64px;
             --radius: 16px;
@@ -36,8 +36,8 @@
             --primary-bg: #0842A0;
             --outline: #444746;
             --surface-variant: #282A2C;
-            --ai-highlight: #1F2225;
-            --ai-text: #A8C7FA;
+            --warning-bg: #3E1C1C;
+            --warning-text: #FFB4AB;
             --success: #81C995;
             --shadow: 0 2px 6px rgba(0,0,0,0.4);
         }
@@ -55,162 +55,143 @@
             transition: background 0.3s, color 0.3s;
         }
         a { text-decoration: none; color: inherit; }
-        
-        /* SVG Icon 通用 */
         .icon { width: 20px; height: 20px; fill: currentColor; vertical-align: middle; }
 
-        /* --- 3. 顶部导航 --- */
+        /* --- 3. 新手引导 Tooltip --- */
+        .help-icon {
+            display: inline-flex; align-items: center; justify-content: center;
+            width: 16px; height: 16px; border-radius: 50%;
+            background: var(--outline); color: var(--text-secondary);
+            font-size: 10px; cursor: help; margin-left: 6px;
+            position: relative;
+        }
+        .help-icon:hover::after {
+            content: attr(data-tip);
+            position: absolute; bottom: 120%; left: 50%; transform: translateX(-50%);
+            background: rgba(0,0,0,0.8); color: #fff; padding: 6px 10px;
+            border-radius: 6px; font-size: 12px; white-space: pre-wrap; width: max-content; max-width: 200px;
+            z-index: 100; pointer-events: none;
+        }
+
+        /* --- 4. 顶部导航 --- */
         .header {
             height: var(--header-height);
             background: var(--bg-card);
             border-bottom: 1px solid var(--outline);
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 0 24px;
-            flex-shrink: 0;
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 0 24px; flex-shrink: 0;
         }
-        .logo {
-            font-size: 18px; font-weight: 600; color: var(--text-primary);
-            display: flex; align-items: center; gap: 10px;
-        }
+        .logo { font-size: 18px; font-weight: 600; color: var(--text-primary); display: flex; align-items: center; gap: 10px; }
         .header-actions { display: flex; align-items: center; gap: 16px; }
-        
-        .btn-text {
-            font-size: 14px; color: var(--text-secondary); cursor: pointer;
-            padding: 6px 12px; border-radius: 8px; transition: background 0.2s;
-        }
+        .btn-text { font-size: 14px; color: var(--text-secondary); padding: 6px 12px; border-radius: 8px; transition: background 0.2s; }
         .btn-text:hover { background: var(--surface-variant); color: var(--primary); }
-        
-        .theme-toggle {
-            width: 36px; height: 36px; border-radius: 50%;
-            display: flex; align-items: center; justify-content: center;
-            cursor: pointer; color: var(--text-secondary);
-            background: var(--surface-variant);
-        }
+        .theme-toggle { width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; color: var(--text-secondary); background: var(--surface-variant); }
 
-        /* --- 4. 主布局 (三栏) --- */
+        /* --- 5. 主布局 --- */
         .main-layout {
-            flex: 1;
-            padding: 20px;
-            display: grid;
-            grid-template-columns: 320px 1fr 320px;
-            gap: 20px;
-            overflow-y: auto;
+            flex: 1; padding: 20px;
+            display: grid; grid-template-columns: 320px 1fr 320px;
+            gap: 20px; overflow-y: auto;
         }
 
         /* 通用卡片 */
         .agent-card {
-            background: var(--bg-card);
-            border-radius: var(--radius);
-            border: 1px solid var(--outline);
-            display: flex; flex-direction: column;
+            background: var(--bg-card); border-radius: var(--radius);
+            border: 1px solid var(--outline); display: flex; flex-direction: column;
             overflow: hidden; box-shadow: var(--shadow);
         }
         .agent-header {
-            padding: 16px 20px;
-            border-bottom: 1px solid var(--outline);
-            font-weight: 600; font-size: 15px;
-            display: flex; align-items: center; gap: 8px;
+            padding: 16px 20px; border-bottom: 1px solid var(--outline);
+            font-weight: 600; font-size: 15px; display: flex; align-items: center; gap: 8px;
             background: var(--bg-card);
         }
-        .agent-body {
-            flex: 1; padding: 20px; overflow-y: auto;
-            display: flex; flex-direction: column; gap: 16px;
-        }
+        .agent-body { flex: 1; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 16px; }
 
-        /* --- 模块 1: 每日播报 (丰富维度) --- */
-        .report-item {
-            border-bottom: 1px solid var(--outline);
-            padding-bottom: 16px;
-        }
-        .report-item:last-child { border-bottom: none; padding-bottom: 0; }
+        /* --- 模块 1: 每日播报 (增强版) --- */
+        .metric-row { display: flex; justify-content: space-between; margin-bottom: 16px; }
+        .metric-box { text-align: center; flex: 1; }
+        .metric-val { font-size: 18px; font-weight: 700; }
+        .metric-lbl { font-size: 12px; color: var(--text-secondary); }
         
-        .report-title { font-size: 13px; color: var(--text-secondary); margin-bottom: 4px; display: flex; justify-content: space-between; }
-        .report-val { font-size: 20px; font-weight: 700; }
-        
-        .ai-insight {
-            margin-top: 8px;
-            background: var(--ai-highlight);
-            padding: 10px; border-radius: 8px;
-            font-size: 12px; line-height: 1.5;
-            color: var(--text-secondary);
-            display: flex; gap: 8px;
+        /* 审核建议 */
+        .audit-box {
+            background: var(--warning-bg); border-radius: 8px; padding: 12px;
+            border: 1px solid rgba(0,0,0,0.05);
         }
-        .ai-icon { color: var(--primary); flex-shrink: 0; margin-top: 2px; }
+        .audit-title { font-size: 13px; font-weight: 600; color: var(--warning-text); margin-bottom: 4px; display: flex; align-items: center; gap: 6px; }
+        .audit-content { font-size: 12px; color: var(--text-primary); line-height: 1.4; }
 
-        /* --- 模块 2: 内容创作 (引导式) --- */
-        /* 引导页状态 */
-        .guide-section { display: flex; flex-direction: column; gap: 20px; height: 100%; }
-        .guide-title { font-size: 18px; font-weight: 600; text-align: center; margin-top: 20px; }
-        .guide-subtitle { font-size: 14px; color: var(--text-secondary); text-align: center; margin-bottom: 20px; }
-        
-        .selection-grid {
-            display: grid; grid-template-columns: 1fr 1fr; gap: 16px;
-        }
-        .selection-card {
-            border: 1px solid var(--outline); border-radius: 12px;
-            padding: 20px; cursor: pointer; text-align: center;
-            transition: all 0.2s; background: var(--surface-variant);
-        }
-        .selection-card:hover { border-color: var(--primary); background: var(--bg-card); box-shadow: var(--shadow); }
-        .sel-icon { width: 40px; height: 40px; margin: 0 auto 10px; color: var(--primary); }
-        .sel-title { font-weight: 600; margin-bottom: 4px; }
-        .sel-desc { font-size: 12px; color: var(--text-secondary); }
+        /* 推荐列表 */
+        .rec-list { display: flex; flex-direction: column; gap: 10px; border-top: 1px solid var(--outline); padding-top: 16px; }
+        .rec-item { display: flex; gap: 10px; cursor: pointer; }
+        .rec-tag { font-size: 10px; padding: 2px 6px; border-radius: 4px; height: fit-content; white-space: nowrap; }
+        .tag-notice { background: #E3F2FD; color: #1565C0; }
+        .tag-course { background: #F3E5F5; color: #7B1FA2; }
+        .tag-activity { background: #E8F5E9; color: #2E7D32; }
+        .rec-text { font-size: 13px; line-height: 1.4; color: var(--text-primary); }
+        .rec-text:hover { color: var(--primary); text-decoration: underline; }
 
-        /* 创作中状态 (默认隐藏) */
-        .creation-workspace { display: none; flex-direction: column; height: 100%; }
-        .chat-area { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 16px; }
+        /* --- 模块 2: 内容创作 (全流程模拟) --- */
+        .guide-view { display: flex; flex-direction: column; gap: 20px; height: 100%; justify-content: center; }
+        .type-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+        .type-card {
+            border: 1px solid var(--outline); border-radius: 12px; padding: 24px;
+            text-align: center; cursor: pointer; transition: all 0.2s; background: var(--surface-variant);
+        }
+        .type-card:hover { border-color: var(--primary); background: var(--bg-card); box-shadow: var(--shadow); }
         
+        .chat-view { display: none; flex-direction: column; height: 100%; }
+        .chat-box { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 16px; }
         .msg { display: flex; gap: 12px; max-width: 90%; }
         .msg.user { align-self: flex-end; flex-direction: row-reverse; }
         .avatar { width: 32px; height: 32px; border-radius: 50%; background: var(--surface-variant); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
         .bubble { padding: 12px 16px; border-radius: 12px; font-size: 14px; line-height: 1.6; background: var(--surface-variant); }
         .msg.user .bubble { background: var(--primary); color: #fff; }
         
+        /* 生成结果卡片 */
+        .result-card { border: 1px solid var(--outline); border-radius: 12px; overflow: hidden; background: var(--bg-card); margin-top: 8px; }
+        .result-preview { height: 120px; background: #eee; display: flex; align-items: center; justify-content: center; color: var(--text-secondary); }
+        .result-info { padding: 12px; }
+        .result-title { font-weight: 600; margin-bottom: 4px; }
+        .publish-btn {
+            width: 100%; padding: 8px; background: var(--primary); color: #fff;
+            border: none; border-radius: 8px; margin-top: 10px; cursor: pointer;
+        }
+        .publish-btn:disabled { background: var(--success); cursor: default; }
+
         .input-bar { padding: 16px; border-top: 1px solid var(--outline); display: flex; gap: 10px; }
         .main-input { flex: 1; padding: 10px 16px; border-radius: 24px; border: 1px solid var(--outline); background: var(--bg-card); color: var(--text-primary); outline: none; }
         .send-btn { width: 40px; height: 40px; border-radius: 50%; background: var(--primary); color: #fff; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; }
 
-        /* --- 模块 3: 认证/账号 (状态切换) --- */
-        /* 状态1: 未认证 */
-        .auth-step-box { text-align: center; padding: 10px 0; }
-        .upload-area {
-            border: 2px dashed var(--outline); border-radius: 12px;
-            padding: 30px 20px; margin: 20px 0; cursor: pointer;
-            color: var(--text-secondary); transition: border-color 0.2s;
+        /* --- 模块 3: 认证/账号 (变形) --- */
+        /* 状态A: 认证助手 */
+        .auth-view { text-align: center; padding: 20px 0; }
+        .upload-box {
+            border: 2px dashed var(--outline); border-radius: 12px; padding: 30px 20px;
+            margin: 20px 0; cursor: pointer; color: var(--text-secondary);
         }
-        .upload-area:hover { border-color: var(--primary); color: var(--primary); }
+        .upload-box:hover { border-color: var(--primary); color: var(--primary); }
         
-        /* 状态2: 已认证 (账号信息) */
-        .account-view { display: none; flex-direction: column; gap: 16px; }
-        .profile-header { display: flex; align-items: center; gap: 16px; }
-        .profile-avatar { width: 56px; height: 56px; border-radius: 50%; background: #eee; }
-        .profile-info h3 { font-size: 16px; margin-bottom: 4px; }
-        .profile-tag { font-size: 11px; color: var(--success); background: rgba(30, 142, 62, 0.1); padding: 2px 6px; border-radius: 4px; }
-        .account-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; background: var(--surface-variant); padding: 12px; border-radius: 8px; }
-        .ac-stat-item { text-align: center; }
-        .ac-num { font-weight: 700; font-size: 16px; }
-        .ac-lbl { font-size: 11px; color: var(--text-secondary); }
+        /* 状态B: 账号中心 (无Header) */
+        .account-view { display: none; flex-direction: column; gap: 16px; height: 100%; }
+        .profile-card { display: flex; align-items: center; gap: 16px; }
+        .profile-img { width: 60px; height: 60px; border-radius: 50%; background: #ccc; }
+        .health-score-box {
+            background: var(--surface-variant); padding: 16px; border-radius: 12px;
+            text-align: center; display: flex; justify-content: space-around;
+        }
+        .score-val { font-size: 24px; font-weight: 700; color: var(--success); }
 
-        /* --- 模块 4: 客服 (预设问题) --- */
+        /* --- 模块 4: 客服 --- */
         .preset-tags { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
-        .tag-chip {
-            font-size: 12px; padding: 6px 12px; border-radius: 16px;
-            background: var(--surface-variant); color: var(--text-secondary);
-            cursor: pointer; border: 1px solid transparent;
-        }
-        .tag-chip:hover { border-color: var(--primary); color: var(--primary); background: var(--bg-card); }
-        
+        .tag-chip { font-size: 12px; padding: 6px 12px; border-radius: 16px; background: var(--surface-variant); color: var(--text-secondary); cursor: pointer; }
+        .tag-chip:hover { background: var(--primary-bg); color: var(--primary); }
         .cs-chat-box { flex: 1; overflow-y: auto; margin-bottom: 10px; display: flex; flex-direction: column; gap: 10px; font-size: 13px; }
         .cs-msg { padding: 8px 12px; border-radius: 8px; max-width: 85%; }
         .cs-msg.sys { background: var(--surface-variant); align-self: flex-start; }
         .cs-msg.me { background: var(--primary-bg); color: var(--primary); align-self: flex-end; }
 
-        /* 响应式 */
-        @media (max-width: 1024px) {
-            .main-layout { grid-template-columns: 1fr; }
-        }
+        @media (max-width: 1024px) { .main-layout { grid-template-columns: 1fr; } }
     </style>
 </head>
 <body>
@@ -238,108 +219,101 @@
     <!-- 主布局 -->
     <div class="main-layout">
 
-        <!-- 1. 每日播报 Agent (丰富维度) -->
+        <!-- 1. 每日播报 Agent -->
         <div class="agent-card">
             <div class="agent-header">
                 <svg class="icon" style="color: var(--primary);" viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/></svg>
                 每日播报 Agent
+                <span class="help-icon" data-tip="每日8:00更新昨日数据与AI建议">?</span>
             </div>
             <div class="agent-body">
-                <!-- 内容维度 -->
-                <div class="report-item">
-                    <div class="report-title">内容表现 <span style="color:var(--success)">▲ 12%</span></div>
-                    <div class="report-val">12.5k <span style="font-size:12px;font-weight:400;color:var(--text-secondary)">阅读</span></div>
-                    <div class="ai-insight">
-                        <svg class="icon ai-icon" viewBox="0 0 24 24"><path d="M9 21c0 .55.45 1 1 1h4c.55 0 1-.45 1-1v-1H9v1zm3-19C8.14 2 5 5.14 5 9c0 2.38 1.19 4.47 3 5.74V17c0 .55.45 1 1 1h6c.55 0 1-.45 1-1v-2.26c1.81-1.27 3-3.36 3-5.74 0-3.86-3.14-7-7-7z"/></svg>
-                        <div>AI分析：科技类文章完播率高，建议今日继续跟进“AI手机”话题。</div>
+                <!-- 基础数据 -->
+                <div class="metric-row">
+                    <div class="metric-box">
+                        <div class="metric-val">12.5k</div>
+                        <div class="metric-lbl">阅读量</div>
+                    </div>
+                    <div class="metric-box">
+                        <div class="metric-val">+892</div>
+                        <div class="metric-lbl">粉丝</div>
+                    </div>
+                    <div class="metric-box">
+                        <div class="metric-val">¥320</div>
+                        <div class="metric-lbl">收益</div>
                     </div>
                 </div>
-                <!-- 粉丝维度 -->
-                <div class="report-item">
-                    <div class="report-title">粉丝增长 <span style="color:var(--success)">▲ 5%</span></div>
-                    <div class="report-val">+892 <span style="font-size:12px;font-weight:400;color:var(--text-secondary)">新增</span></div>
-                    <div class="ai-insight">
-                        <svg class="icon ai-icon" viewBox="0 0 24 24"><path d="M9 21c0 .55.45 1 1 1h4c.55 0 1-.45 1-1v-1H9v1zm3-19C8.14 2 5 5.14 5 9c0 2.38 1.19 4.47 3 5.74V17c0 .55.45 1 1 1h6c.55 0 1-.45 1-1v-2.26c1.81-1.27 3-3.36 3-5.74 0-3.86-3.14-7-7-7z"/></svg>
-                        <div>AI建议：新粉多来自视频流，建议发布一条欢迎视频巩固粘性。</div>
+
+                <!-- 审核建议 (新增) -->
+                <div class="audit-box">
+                    <div class="audit-title">
+                        <svg class="icon" style="width:16px;height:16px;" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>
+                        内容审核建议
+                        <span class="help-icon" data-tip="AI检测到的潜在违规风险">?</span>
+                    </div>
+                    <div class="audit-content">
+                        您昨日发布的视频《科技黑幕》疑似包含夸大宣传词汇，建议修改标题，避免被限流。
                     </div>
                 </div>
-                <!-- 收益维度 -->
-                <div class="report-item">
-                    <div class="report-title">昨日收益</div>
-                    <div class="report-val">¥ 320.5</div>
-                    <div class="ai-insight">
-                        <svg class="icon ai-icon" viewBox="0 0 24 24"><path d="M9 21c0 .55.45 1 1 1h4c.55 0 1-.45 1-1v-1H9v1zm3-19C8.14 2 5 5.14 5 9c0 2.38 1.19 4.47 3 5.74V17c0 .55.45 1 1 1h6c.55 0 1-.45 1-1v-2.26c1.81-1.27 3-3.36 3-5.74 0-3.86-3.14-7-7-7z"/></svg>
-                        <div>AI分析：CPM 保持稳定，优质原创补贴已到账。</div>
+
+                <!-- 情报推荐 (新增) -->
+                <div class="rec-list">
+                    <div style="font-size:12px; font-weight:600; color:var(--text-secondary);">情报推荐</div>
+                    <div class="rec-item">
+                        <span class="rec-tag tag-notice">公告</span>
+                        <div class="rec-text">快传号关于打击低质内容的最新规范</div>
                     </div>
-                </div>
-                <!-- 账号维度 -->
-                <div class="report-item">
-                    <div class="report-title">账号健康度</div>
-                    <div class="report-val">98 <span style="font-size:12px;font-weight:400;color:var(--text-secondary)">分</span></div>
-                    <div class="ai-insight">
-                        <svg class="icon ai-icon" viewBox="0 0 24 24"><path d="M9 21c0 .55.45 1 1 1h4c.55 0 1-.45 1-1v-1H9v1zm3-19C8.14 2 5 5.14 5 9c0 2.38 1.19 4.47 3 5.74V17c0 .55.45 1 1 1h6c.55 0 1-.45 1-1v-2.26c1.81-1.27 3-3.36 3-5.74 0-3.86-3.14-7-7-7z"/></svg>
-                        <div>AI建议：信用极佳，已获得“优质创作者”流量加权。</div>
+                    <div class="rec-item">
+                        <span class="rec-tag tag-course">课程</span>
+                        <div class="rec-text">新手必看：如何写出10w+爆款标题</div>
+                    </div>
+                    <div class="rec-item">
+                        <span class="rec-tag tag-activity">活动</span>
+                        <div class="rec-text">参与“夏日Vlog挑战”，瓜分百万流量</div>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- 2. 内容创作 Agent (降低门槛) -->
+        <!-- 2. 内容创作 Agent (全流程模拟) -->
         <div class="agent-card">
             <div class="agent-header">
                 <svg class="icon" style="color: var(--primary);" viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>
                 内容创作 Agent
+                <span class="help-icon" data-tip="AI辅助生成图文或视频，支持一键发布">?</span>
             </div>
             <div class="agent-body" style="padding: 0;">
                 
-                <!-- 引导界面 (默认显示) -->
-                <div class="guide-section" id="guideSection" style="padding: 20px;">
-                    <div>
-                        <div class="guide-title">开始新的创作</div>
-                        <div class="guide-subtitle">AI 辅助，从灵感到发布只需几步</div>
+                <!-- 引导页 -->
+                <div class="guide-view" id="guideView" style="padding: 20px;">
+                    <div style="text-align:center; margin-bottom:20px;">
+                        <h3 style="margin-bottom:8px;">今天想创作什么？</h3>
+                        <p style="font-size:13px; color:var(--text-secondary);">选择体裁，AI 帮您从灵感到发布</p>
                     </div>
-                    
-                    <div style="font-size: 13px; font-weight: 600; margin-bottom: 8px;">选择体裁</div>
-                    <div class="selection-grid">
-                        <div class="selection-card" onclick="selectType('article')">
-                            <svg class="icon sel-icon" viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/></svg>
-                            <div class="sel-title">图文</div>
-                            <div class="sel-desc">文章、资讯、评测</div>
+                    <div class="type-grid">
+                        <div class="type-card" onclick="startFlow('article')">
+                            <svg class="icon" style="width:40px;height:40px;color:var(--primary);margin-bottom:10px;" viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/></svg>
+                            <div style="font-weight:600;">图文创作</div>
+                            <div style="font-size:12px; color:var(--text-secondary); margin-top:4px;">文章、资讯</div>
                         </div>
-                        <div class="selection-card" onclick="selectType('video')">
-                            <svg class="icon sel-icon" viewBox="0 0 24 24"><path d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z"/></svg>
-                            <div class="sel-title">视频</div>
-                            <div class="sel-desc">短视频、混剪</div>
-                        </div>
-                    </div>
-
-                    <div style="font-size: 13px; font-weight: 600; margin-bottom: 8px; margin-top: 10px;">当前状态</div>
-                    <div class="selection-grid">
-                        <div class="selection-card" onclick="selectStatus('topic')">
-                            <div class="sel-title">只有一个想法</div>
-                            <div class="sel-desc">输入主题，AI生成大纲</div>
-                        </div>
-                        <div class="selection-card" onclick="selectStatus('draft')">
-                            <div class="sel-title">已有草稿/素材</div>
-                            <div class="sel-desc">上传润色或剪辑</div>
+                        <div class="type-card" onclick="startFlow('video')">
+                            <svg class="icon" style="width:40px;height:40px;color:var(--primary);margin-bottom:10px;" viewBox="0 0 24 24"><path d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z"/></svg>
+                            <div style="font-weight:600;">视频创作</div>
+                            <div style="font-size:12px; color:var(--text-secondary); margin-top:4px;">短视频、混剪</div>
                         </div>
                     </div>
                 </div>
 
-                <!-- 创作工作区 (隐藏) -->
-                <div class="creation-workspace" id="workspace">
-                    <div class="chat-area" id="chatArea">
-                        <div class="msg ai">
-                            <div class="avatar"><svg class="icon" viewBox="0 0 24 24"><path d="M19 9l1.25-2.75L23 5l-2.75-1.25L19 1l-1.25 2.75L15 5l2.75 1.25L19 9zm-7.5.5L9 4 6.5 9.5 1 12l5.5 2.5L9 20l2.5-5.5L17 12l-5.5-2.5zM19 15l-1.25 2.75L15 19l2.75 1.25L19 23l1.25-2.75L23 19l-2.75-1.25L19 15z"/></svg></div>
-                            <div class="bubble" id="initMsg">已为您准备好创作环境。请输入您的主题：</div>
-                        </div>
+                <!-- 聊天工作区 -->
+                <div class="chat-view" id="chatView">
+                    <div class="chat-box" id="chatBox">
+                        <!-- 消息动态插入 -->
                     </div>
                     <div class="input-bar">
-                        <button onclick="resetCreator()" style="border:none; background:transparent; color:var(--text-secondary); cursor:pointer;">
+                        <button onclick="resetCreator()" style="border:none; background:transparent; color:var(--text-secondary); cursor:pointer;" title="返回">
                             <svg class="icon" viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>
                         </button>
-                        <input type="text" class="main-input" id="creatorInput" placeholder="输入内容..." onkeypress="handleEnter(event)">
-                        <button class="send-btn" onclick="sendCreation()">
+                        <input type="text" class="main-input" id="creatorInput" placeholder="输入主题..." onkeypress="handleEnter(event)">
+                        <button class="send-btn" onclick="sendTopic()">
                             <svg class="icon" viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
                         </button>
                     </div>
@@ -351,65 +325,67 @@
         <!-- 右侧栏 -->
         <div style="display: flex; flex-direction: column; gap: 20px;">
             
-            <!-- 3. 认证 Agent (流程化) -->
-            <div class="agent-card">
-                <div class="agent-header">
+            <!-- 3. 认证/账号 (变形模块) -->
+            <div class="agent-card" id="authCard">
+                <!-- 状态A: 认证助手 -->
+                <div class="agent-header" id="authHeader">
                     <svg class="icon" style="color: var(--primary);" viewBox="0 0 24 24"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm-2 16l-4-4 1.41-1.41L10 14.17l6.59-6.59L18 9l-8 8z"/></svg>
-                    作者认证 Agent
+                    认证助手 Agent
+                    <span class="help-icon" data-tip="上传材料完成实名认证，解锁更多权益">?</span>
                 </div>
-                <div class="agent-body">
-                    
-                    <!-- 阶段1: 上传材料 -->
-                    <div id="authStep1" class="auth-step-box">
-                        <div style="font-size:14px; margin-bottom:10px;">请上传身份证及资质证明</div>
-                        <div class="upload-area" onclick="uploadMaterial()">
+                <div class="agent-body" id="authBody">
+                    <div class="auth-view">
+                        <div style="font-size:14px;">请上传身份证及资质证明</div>
+                        <div class="upload-box" onclick="uploadMaterial()">
                             <svg class="icon" style="width:32px;height:32px;margin-bottom:8px;" viewBox="0 0 24 24"><path d="M9 16h6v-6h4l-7-7-7 7h4zm-4 2h14v2H5z"/></svg>
                             <div id="uploadText">点击上传材料</div>
                         </div>
                         <div style="font-size:12px; color:var(--text-tertiary);">支持 JPG, PNG, PDF</div>
                     </div>
+                </div>
 
-                    <!-- 阶段2: 账号信息 (认证后显示) -->
-                    <div id="authStep2" class="account-view">
-                        <div class="profile-header">
-                            <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Felix" class="profile-avatar">
-                            <div class="profile-info">
-                                <h3>科技观察者</h3>
-                                <span class="profile-tag">已实名认证</span>
-                            </div>
-                        </div>
-                        <div class="account-stats">
-                            <div class="ac-stat-item">
-                                <div class="ac-num">LV.5</div>
-                                <div class="ac-lbl">等级</div>
-                            </div>
-                            <div class="ac-stat-item">
-                                <div class="ac-num">98</div>
-                                <div class="ac-lbl">信用分</div>
-                            </div>
-                        </div>
-                        <div style="font-size:12px; color:var(--text-secondary); line-height:1.4;">
-                            您的账号状态良好，已获得原创保护权益。
+                <!-- 状态B: 账号中心 (认证后显示，无Agent标题) -->
+                <div class="agent-body" id="accountBody" style="display: none;">
+                    <div class="profile-card">
+                        <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Felix" class="profile-img">
+                        <div>
+                            <div style="font-weight:600; font-size:16px;">科技观察者</div>
+                            <div style="font-size:12px; color:var(--success); background:rgba(30,142,62,0.1); padding:2px 6px; border-radius:4px; display:inline-block; margin-top:4px;">已实名认证</div>
                         </div>
                     </div>
-
+                    
+                    <!-- 账号健康度 (从左侧移来) -->
+                    <div class="health-score-box">
+                        <div>
+                            <div class="score-val">98</div>
+                            <div style="font-size:12px; color:var(--text-secondary);">健康分</div>
+                        </div>
+                        <div>
+                            <div class="score-val" style="color:var(--primary);">LV.5</div>
+                            <div style="font-size:12px; color:var(--text-secondary);">等级</div>
+                        </div>
+                    </div>
+                    <div style="font-size:12px; color:var(--text-secondary); line-height:1.4;">
+                        账号状态良好，已获得“优质创作者”流量扶持。
+                    </div>
                 </div>
             </div>
 
-            <!-- 4. 客服助手 Agent (预设问题) -->
+            <!-- 4. 客服助手 Agent -->
             <div class="agent-card" style="flex: 1;">
                 <div class="agent-header">
                     <svg class="icon" style="color: var(--primary);" viewBox="0 0 24 24"><path d="M21 12.22C21 6.73 16.96 3 12 3 7.03 3 3 6.73 3 12.22c0 5.07 3.57 8.64 8 9.65v-2.1c-3.13-.93-5-3.66-5-6.77 0-3.87 3.13-7 7-7s7 3.13 7 7c0 3.11-1.87 5.84-5 6.77v2.1c4.43-1.01 8-4.58 8-9.65zM12 13c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm1 4h-2v4h2v-4z"/></svg>
                     客服助手 Agent
+                    <span class="help-icon" data-tip="7x24小时智能问答，解决平台使用问题">?</span>
                 </div>
                 <div class="agent-body">
                     <div class="preset-tags">
-                        <div class="tag-chip" onclick="askPreset('如何提现收益？')">如何提现</div>
-                        <div class="tag-chip" onclick="askPreset('文章审核多久？')">审核时长</div>
-                        <div class="tag-chip" onclick="askPreset('推荐机制是什么？')">推荐机制</div>
+                        <div class="tag-chip" onclick="askPreset('如何提现？')">如何提现</div>
+                        <div class="tag-chip" onclick="askPreset('审核规范')">审核规范</div>
+                        <div class="tag-chip" onclick="askPreset('流量机制')">流量机制</div>
                     </div>
                     <div class="cs-chat-box" id="csChat">
-                        <div class="cs-msg sys">您好，我是智能客服。点击上方标签或直接提问。</div>
+                        <div class="cs-msg sys">您好，我是智能客服。请问有什么可以帮您？</div>
                     </div>
                     <div style="display:flex; gap:8px;">
                         <input type="text" id="csInput" style="flex:1; padding:8px; border-radius:8px; border:1px solid var(--outline); background:var(--bg-card); color:var(--text-primary);" placeholder="输入问题...">
@@ -428,98 +404,123 @@
         function toggleTheme() {
             const html = document.documentElement;
             const current = html.getAttribute('data-theme');
-            const next = current === 'light' ? 'dark' : 'light';
-            html.setAttribute('data-theme', next);
-            
-            // 切换图标
-            const icon = document.getElementById('themeIcon');
-            if(next === 'dark') {
-                icon.innerHTML = '<path d="M12 7c-2.76 0-5 2.24-5 5s2.24 5 5 5 5-2.24 5-5-2.24-5-5-5zM2 13h2c.55 0 1-.45 1-1s-.45-1-1-1H2c-.55 0-1 .45-1 1s.45 1 1 1zm18 0h2c.55 0 1-.45 1-1s-.45-1-1-1h-2c-.55 0-1 .45-1 1s.45 1 1 1zM11 2v2c0 .55.45 1 1 1s1-.45 1-1V2c0-.55-.45-1-1-1s-1 .45-1 1zm0 18v2c0 .55.45 1 1 1s1-.45 1-1v-2c0-.55-.45-1-1-1s-1 .45-1 1zM5.99 4.93c.39-.39.39-1.02 0-1.41-.39-.39-1.02-.39-1.41 0l-1.41 1.41c-.39.39-.39 1.02 0 1.41.39.39 1.02.39 1.41 0l1.41-1.41zm13.42 13.42c.39-.39.39-1.02 0-1.41-.39-.39-1.02-.39-1.41 0l-1.41 1.41c-.39.39-.39 1.02 0 1.41.39.39 1.02.39 1.41 0l1.41-1.41zM5.99 19.07c-.39-.39-1.02-.39-1.41 0l-1.41 1.41c-.39.39-.39 1.02 0 1.41.39.39 1.02.39 1.41 0l1.41-1.41c.39-.39.39-1.02 0-1.41zM19.07 5.99c.39-.39.39-1.02 0-1.41l-1.41-1.41c-.39-.39-1.02-.39-1.41 0-.39.39-.39 1.02 0 1.41l1.41 1.41c.39.39 1.02.39 1.41 0z"/>';
-            } else {
-                icon.innerHTML = '<path d="M12 3c-4.97 0-9 4.03-9 9s4.03 9 9 9 9-4.03 9-9c0-.46-.04-.92-.1-1.36-.98 1.37-2.58 2.26-4.4 2.26-2.98 0-5.4-2.42-5.4-5.4 0-1.81.89-3.42 2.26-4.4-.44-.06-.9-.1-1.36-.1z"/>';
-            }
+            html.setAttribute('data-theme', current === 'light' ? 'dark' : 'light');
         }
 
-        // --- 2. 创作 Agent 逻辑 ---
-        let creationState = { type: '', status: '' };
+        // --- 2. 创作全流程模拟 ---
+        let currentType = '';
 
-        function selectType(type) {
-            creationState.type = type;
-            // 视觉反馈：简单闪烁或高亮（此处简化，直接进入下一步逻辑）
-            // 实际逻辑：记录类型，等待用户选状态
-        }
-
-        function selectStatus(status) {
-            creationState.status = status;
-            // 切换到聊天界面
-            document.getElementById('guideSection').style.display = 'none';
-            document.getElementById('workspace').style.display = 'flex';
+        function startFlow(type) {
+            currentType = type;
+            document.getElementById('guideView').style.display = 'none';
+            document.getElementById('chatView').style.display = 'flex';
             
-            const typeText = creationState.type === 'article' ? '图文' : '视频';
-            const statusText = status === 'topic' ? '想法' : '草稿';
-            
-            document.getElementById('initMsg').innerText = `已为您切换至【${typeText}】创作模式。您选择了从【${statusText}】开始。请输入您的主题或上传文件：`;
-        }
-
-        function resetCreator() {
-            document.getElementById('workspace').style.display = 'none';
-            document.getElementById('guideSection').style.display = 'flex';
-            document.getElementById('chatArea').innerHTML = `
+            const chat = document.getElementById('chatBox');
+            chat.innerHTML = `
                 <div class="msg ai">
                     <div class="avatar"><svg class="icon" viewBox="0 0 24 24"><path d="M19 9l1.25-2.75L23 5l-2.75-1.25L19 1l-1.25 2.75L15 5l2.75 1.25L19 9zm-7.5.5L9 4 6.5 9.5 1 12l5.5 2.5L9 20l2.5-5.5L17 12l-5.5-2.5zM19 15l-1.25 2.75L15 19l2.75 1.25L19 23l1.25-2.75L23 19l-2.75-1.25L19 15z"/></svg></div>
-                    <div class="bubble" id="initMsg"></div>
+                    <div class="bubble">已进入${type === 'article' ? '图文' : '视频'}创作模式。请输入您的创作主题：</div>
                 </div>
             `;
         }
 
-        function handleEnter(e) {
-            if(e.key === 'Enter') sendCreation();
+        function resetCreator() {
+            document.getElementById('chatView').style.display = 'none';
+            document.getElementById('guideView').style.display = 'flex';
         }
 
-        function sendCreation() {
+        function handleEnter(e) {
+            if(e.key === 'Enter') sendTopic();
+        }
+
+        function sendTopic() {
             const input = document.getElementById('creatorInput');
             const val = input.value.trim();
             if(!val) return;
 
-            const chat = document.getElementById('chatArea');
+            const chat = document.getElementById('chatBox');
             chat.innerHTML += `<div class="msg user"><div class="bubble">${val}</div></div>`;
             input.value = '';
             chat.scrollTop = chat.scrollHeight;
 
-            // 模拟生成
+            // 模拟 AI 思考与生成
             setTimeout(() => {
                 chat.innerHTML += `
                     <div class="msg ai">
                         <div class="avatar"><svg class="icon" viewBox="0 0 24 24"><path d="M19 9l1.25-2.75L23 5l-2.75-1.25L19 1l-1.25 2.75L15 5l2.75 1.25L19 9zm-7.5.5L9 4 6.5 9.5 1 12l5.5 2.5L9 20l2.5-5.5L17 12l-5.5-2.5zM19 15l-1.25 2.75L15 19l2.75 1.25L19 23l1.25-2.75L23 19l-2.75-1.25L19 15z"/></svg></div>
-                        <div class="bubble">
-                            已根据您的想法生成了大纲：<br>
-                            1. 引言：${val}的背景<br>
-                            2. 核心观点分析<br>
-                            3. 总结<br>
-                            <button style="margin-top:8px; padding:6px 12px; border-radius:8px; border:none; background:var(--primary); color:#fff; cursor:pointer;">生成全文</button>
-                        </div>
+                        <div class="bubble">正在为您生成${currentType === 'article' ? '大纲' : '脚本'}...</div>
                     </div>
                 `;
                 chat.scrollTop = chat.scrollHeight;
+
+                setTimeout(() => {
+                    const resultHtml = currentType === 'article' 
+                        ? `<div class="result-card">
+                             <div class="result-preview"><svg class="icon" style="width:40px;height:40px;" viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/></svg></div>
+                             <div class="result-info">
+                               <div class="result-title">${val} - 深度解析</div>
+                               <div style="font-size:12px;color:var(--text-secondary);">已生成 1500 字，包含 3 张配图。</div>
+                               <button class="publish-btn" onclick="publishContent(this)">一键发布</button>
+                             </div>
+                           </div>`
+                        : `<div class="result-card">
+                             <div class="result-preview"><svg class="icon" style="width:40px;height:40px;" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5v-9l6 4.5-6 4.5z"/></svg></div>
+                             <div class="result-info">
+                               <div class="result-title">${val} - 短视频</div>
+                               <div style="font-size:12px;color:var(--text-secondary);">时长 00:45，数字人播报已就绪。</div>
+                               <button class="publish-btn" onclick="publishContent(this)">一键发布</button>
+                             </div>
+                           </div>`;
+
+                    chat.innerHTML += `
+                        <div class="msg ai">
+                            <div class="avatar"><svg class="icon" viewBox="0 0 24 24"><path d="M19 9l1.25-2.75L23 5l-2.75-1.25L19 1l-1.25 2.75L15 5l2.75 1.25L19 9zm-7.5.5L9 4 6.5 9.5 1 12l5.5 2.5L9 20l2.5-5.5L17 12l-5.5-2.5zM19 15l-1.25 2.75L15 19l2.75 1.25L19 23l1.25-2.75L23 19l-2.75-1.25L19 15z"/></svg></div>
+                            <div class="bubble" style="width:100%;">
+                                内容已生成，请确认：<br>
+                                ${resultHtml}
+                            </div>
+                        </div>
+                    `;
+                    chat.scrollTop = chat.scrollHeight;
+                }, 1500);
             }, 1000);
         }
 
-        // --- 3. 认证 Agent 逻辑 ---
+        function publishContent(btn) {
+            btn.innerText = "发布中...";
+            btn.disabled = true;
+            setTimeout(() => {
+                btn.innerText = "发布成功！";
+                btn.style.background = "var(--success)";
+                
+                const chat = document.getElementById('chatBox');
+                chat.innerHTML += `
+                    <div class="msg ai">
+                        <div class="avatar"><svg class="icon" viewBox="0 0 24 24"><path d="M19 9l1.25-2.75L23 5l-2.75-1.25L19 1l-1.25 2.75L15 5l2.75 1.25L19 9zm-7.5.5L9 4 6.5 9.5 1 12l5.5 2.5L9 20l2.5-5.5L17 12l-5.5-2.5zM19 15l-1.25 2.75L15 19l2.75 1.25L19 23l1.25-2.75L23 19l-2.75-1.25L19 15z"/></svg></div>
+                        <div class="bubble">🎉 恭喜！您的内容已成功发布，正在进入推荐池。</div>
+                    </div>
+                `;
+                chat.scrollTop = chat.scrollHeight;
+            }, 1500);
+        }
+
+        // --- 3. 认证 -> 账号变形逻辑 ---
         function uploadMaterial() {
             const txt = document.getElementById('uploadText');
             txt.innerText = "正在上传并识别...";
             
             setTimeout(() => {
-                txt.innerText = "识别成功，正在提交审核...";
+                txt.innerText = "识别成功，提交审核...";
                 setTimeout(() => {
-                    // 切换到账号视图
-                    document.getElementById('authStep1').style.display = 'none';
-                    document.getElementById('authStep2').style.display = 'flex';
+                    // 隐藏认证界面，显示账号界面
+                    document.getElementById('authHeader').style.display = 'none'; // 隐藏标题
+                    document.getElementById('authBody').style.display = 'none';
+                    document.getElementById('accountBody').style.display = 'flex';
                 }, 1500);
             }, 1500);
         }
 
-        // --- 4. 客服 Agent 逻辑 ---
+        // --- 4. 客服逻辑 ---
         function askPreset(q) {
             document.getElementById('csInput').value = q;
             sendCs();
@@ -536,11 +537,7 @@
             chat.scrollTop = chat.scrollHeight;
 
             setTimeout(() => {
-                let reply = "收到您的问题，Agent正在查询知识库...";
-                if(val.includes("提现")) reply = "收益满 100 元即可在每月 10 号申请提现。";
-                if(val.includes("审核")) reply = "通常审核时间为 30 分钟至 2 小时。";
-                
-                chat.innerHTML += `<div class="cs-msg sys">${reply}</div>`;
+                chat.innerHTML += `<div class="cs-msg sys">收到，Agent正在为您查询相关信息...</div>`;
                 chat.scrollTop = chat.scrollHeight;
             }, 800);
         }
