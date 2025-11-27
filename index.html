@@ -17,11 +17,12 @@
             --outline: #E0E3E1;
             --surface-variant: #F0F4F9;
             --ai-highlight: #F2F8FF;
-            --ai-text: #0B57D0;
+            --warning-text: #B3261E;
             --success: #1E8E3E;
             --header-height: 64px;
             --radius: 16px;
             --shadow: 0 2px 6px rgba(0,0,0,0.05);
+            --weather-bg: linear-gradient(135deg, #E3F2FD, #BBDEFB);
         }
 
         [data-theme="dark"] {
@@ -35,9 +36,10 @@
             --outline: #444746;
             --surface-variant: #282A2C;
             --ai-highlight: #1F2225;
-            --ai-text: #A8C7FA;
+            --warning-text: #F2B8B5;
             --success: #81C995;
             --shadow: 0 2px 6px rgba(0,0,0,0.4);
+            --weather-bg: linear-gradient(135deg, #0D47A1, #1565C0);
         }
 
         /* --- 2. 全局重置 --- */
@@ -55,7 +57,7 @@
         a { text-decoration: none; color: inherit; }
         .icon { width: 20px; height: 20px; fill: currentColor; vertical-align: middle; }
 
-        /* --- 3. 修复后的 Tooltip --- */
+        /* --- 3. Tooltip --- */
         .help-container { position: relative; display: inline-flex; align-items: center; }
         .help-icon {
             display: inline-flex; align-items: center; justify-content: center;
@@ -63,9 +65,7 @@
             background: var(--outline); color: var(--text-secondary);
             font-size: 10px; cursor: help; margin-left: 6px;
         }
-        .help-icon:hover + .tooltip-text {
-            opacity: 1; visibility: visible; transform: translateY(0);
-        }
+        .help-icon:hover + .tooltip-text { opacity: 1; visibility: visible; transform: translateY(0); }
         .tooltip-text {
             position: absolute; top: 100%; left: 50%; transform: translateX(-50%) translateY(5px);
             background: rgba(0,0,0,0.85); color: #fff; padding: 8px 12px;
@@ -89,7 +89,7 @@
         /* --- 5. 主布局 --- */
         .main-layout {
             flex: 1; padding: 20px;
-            display: grid; grid-template-columns: 340px 1fr 320px; /* 左侧稍宽以容纳详细分析 */
+            display: grid; grid-template-columns: 340px 1fr 320px;
             gap: 20px; overflow-y: auto;
         }
 
@@ -106,10 +106,19 @@
         }
         .agent-body { flex: 1; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 16px; }
 
-        /* --- 模块 1: 每日播报 (管家模式) --- */
+        /* --- 模块 1: 每日播报 (天气+鸡汤+管家) --- */
+        .weather-quote-box {
+            background: var(--weather-bg); border-radius: 12px; padding: 16px;
+            margin-bottom: 16px; color: #1F1F1F; /* 强制深色字以适配浅色背景 */
+        }
+        [data-theme="dark"] .weather-quote-box { color: #FFFFFF; }
+        
+        .weather-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+        .weather-info { display: flex; align-items: center; gap: 8px; font-weight: 600; font-size: 16px; }
+        .quote-text { font-size: 12px; font-style: italic; opacity: 0.9; line-height: 1.4; }
+
         .butler-greeting { font-size: 14px; color: var(--text-primary); margin-bottom: 10px; font-weight: 500; }
         
-        .report-section { display: flex; flex-direction: column; gap: 16px; }
         .report-card {
             border: 1px solid var(--outline); border-radius: 12px; padding: 12px;
             background: var(--surface-variant);
@@ -118,7 +127,6 @@
         .report-lbl { font-size: 13px; color: var(--text-secondary); }
         .report-val { font-size: 18px; font-weight: 700; }
         
-        /* AI 分析气泡 */
         .ai-bubble {
             background: var(--bg-card); border-radius: 8px; padding: 10px;
             font-size: 12px; color: var(--text-secondary); line-height: 1.5;
@@ -136,72 +144,72 @@
         .rec-text { font-size: 13px; line-height: 1.4; color: var(--text-primary); }
         .rec-text:hover { color: var(--primary); text-decoration: underline; }
 
-        /* --- 模块 2: 内容创作 (六步流程) --- */
-        .step-indicator {
-            display: flex; justify-content: space-between; margin-bottom: 20px; padding: 0 10px;
+        /* --- 模块 2: 内容创作 (灵感仪表盘 + 双流程) --- */
+        /* 仪表盘 */
+        .dashboard-tabs { display: flex; gap: 16px; border-bottom: 1px solid var(--outline); margin-bottom: 16px; }
+        .dash-tab { padding-bottom: 8px; cursor: pointer; font-size: 14px; color: var(--text-secondary); border-bottom: 2px solid transparent; }
+        .dash-tab.active { color: var(--primary); border-color: var(--primary); font-weight: 600; }
+        
+        .rec-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px; }
+        .rec-card {
+            background: var(--surface-variant); border-radius: 12px; padding: 12px;
+            cursor: pointer; border: 1px solid transparent; transition: all 0.2s;
         }
-        .step-dot {
-            width: 8px; height: 8px; border-radius: 50%; background: var(--outline);
-            position: relative;
+        .rec-card:hover { border-color: var(--primary); background: var(--bg-card); box-shadow: var(--shadow); }
+        .rec-reason { font-size: 10px; color: var(--primary); background: var(--primary-bg); padding: 2px 6px; border-radius: 4px; display: inline-block; margin-bottom: 6px; }
+        .rec-topic { font-size: 13px; font-weight: 600; line-height: 1.4; margin-bottom: 4px; }
+        .rec-meta { font-size: 11px; color: var(--text-tertiary); }
+
+        .create-actions { display: flex; gap: 16px; margin-top: auto; }
+        .create-btn {
+            flex: 1; padding: 16px; border-radius: 12px; border: 1px solid var(--outline);
+            background: var(--bg-card); cursor: pointer; text-align: center; transition: all 0.2s;
+            display: flex; flex-direction: column; align-items: center; gap: 8px;
         }
+        .create-btn:hover { border-color: var(--primary); background: var(--ai-highlight); }
+        .create-btn svg { width: 32px; height: 32px; color: var(--primary); }
+        .create-btn span { font-weight: 600; font-size: 14px; }
+
+        /* 流程通用 */
+        .flow-container { display: none; flex-direction: column; height: 100%; animation: fadeIn 0.3s; }
+        .step-indicator { display: flex; justify-content: space-between; margin-bottom: 20px; padding: 0 10px; }
+        .step-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--outline); position: relative; }
         .step-dot.active { background: var(--primary); transform: scale(1.2); }
         .step-dot.done { background: var(--success); }
-
-        .creation-stage { display: flex; flex-direction: column; height: 100%; animation: fadeIn 0.3s; }
+        
+        .stage-content { flex: 1; display: flex; flex-direction: column; justify-content: center; padding: 0 20px; }
         .stage-title { font-size: 16px; font-weight: 600; text-align: center; margin-bottom: 20px; }
         
-        /* 步骤通用样式 */
-        .gui-input {
-            width: 100%; padding: 14px; border-radius: 12px; border: 1px solid var(--outline);
-            background: var(--bg-card); color: var(--text-primary); font-size: 14px; outline: none; margin-bottom: 16px;
-        }
+        .gui-input { width: 100%; padding: 14px; border-radius: 12px; border: 1px solid var(--outline); background: var(--bg-card); color: var(--text-primary); font-size: 14px; outline: none; margin-bottom: 16px; }
         .gui-input:focus { border-color: var(--primary); }
         
-        .ai-preview-box {
-            flex: 1; background: var(--surface-variant); border-radius: 12px; padding: 16px;
-            font-size: 14px; line-height: 1.6; overflow-y: auto; margin-bottom: 16px;
-            border: 1px solid var(--outline); white-space: pre-wrap;
-        }
+        .ai-preview-box { flex: 1; background: var(--surface-variant); border-radius: 12px; padding: 16px; font-size: 14px; line-height: 1.6; overflow-y: auto; margin-bottom: 16px; border: 1px solid var(--outline); white-space: pre-wrap; }
         
-        .action-btn {
-            width: 100%; padding: 12px; border-radius: 24px; border: none;
-            background: var(--primary); color: #fff; font-size: 14px; font-weight: 500; cursor: pointer;
-            display: flex; align-items: center; justify-content: center; gap: 8px;
-        }
+        .action-btn { width: 100%; padding: 12px; border-radius: 24px; border: none; background: var(--primary); color: #fff; font-size: 14px; font-weight: 500; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; }
         .action-btn:hover { opacity: 0.9; }
         .action-btn.secondary { background: var(--surface-variant); color: var(--text-primary); margin-top: 10px; }
 
         /* --- 模块 3: 认证/账号 --- */
         .auth-view { text-align: center; padding: 20px 0; }
-        .upload-box {
-            border: 2px dashed var(--outline); border-radius: 12px; padding: 30px 20px;
-            margin: 20px 0; cursor: pointer; color: var(--text-secondary);
-        }
+        .upload-box { border: 2px dashed var(--outline); border-radius: 12px; padding: 30px 20px; margin: 20px 0; cursor: pointer; color: var(--text-secondary); }
         .upload-box:hover { border-color: var(--primary); color: var(--primary); }
         
         .account-view { display: none; flex-direction: column; gap: 16px; height: 100%; }
         .profile-card { display: flex; align-items: center; gap: 16px; }
         .profile-img { width: 60px; height: 60px; border-radius: 50%; background: #ccc; }
-        .health-score-box {
-            background: var(--surface-variant); padding: 16px; border-radius: 12px;
-            text-align: center; display: flex; justify-content: space-around;
-        }
+        .health-score-box { background: var(--surface-variant); padding: 16px; border-radius: 12px; text-align: center; display: flex; justify-content: space-around; }
         .score-val { font-size: 24px; font-weight: 700; color: var(--success); }
 
-        /* --- 模块 4: 客服 (热情模式) --- */
+        /* --- 模块 4: 客服 --- */
         .cs-chat-box { flex: 1; overflow-y: auto; margin-bottom: 10px; display: flex; flex-direction: column; gap: 12px; font-size: 13px; padding-right: 5px; }
         .cs-msg { padding: 10px 14px; border-radius: 12px; max-width: 85%; line-height: 1.4; }
         .cs-msg.sys { background: var(--surface-variant); align-self: flex-start; border-bottom-left-radius: 2px; }
         .cs-msg.me { background: var(--primary-bg); color: var(--primary); align-self: flex-end; border-bottom-right-radius: 2px; }
-        
         .preset-tags { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
         .tag-chip { font-size: 12px; padding: 6px 12px; border-radius: 16px; background: var(--surface-variant); color: var(--text-secondary); cursor: pointer; }
         .tag-chip:hover { background: var(--primary-bg); color: var(--primary); }
 
-        /* 动画 */
         @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-
         @media (max-width: 1024px) { .main-layout { grid-template-columns: 1fr; } }
     </style>
 </head>
@@ -241,9 +249,21 @@
                 </div>
             </div>
             <div class="agent-body">
+                <!-- 天气与鸡汤 -->
+                <div class="weather-quote-box">
+                    <div class="weather-row">
+                        <div class="weather-info">
+                            <svg class="icon" viewBox="0 0 24 24"><path d="M6.76 4.84l-1.8-1.79-1.41 1.41 1.79 1.79 1.42-1.41zM4 10.5H1v2h3v-2zm9-9.95h-2V3.5h2V.55zm7.45 3.91l-1.41-1.41-1.79 1.79 1.41 1.41 1.79-1.79zm-3.21 13.7l1.79 1.79 1.41-1.41-1.79-1.79-1.41 1.41zM20 10.5v2h3v-2h-3zm-8-5c-3.31 0-6 2.69-6 6s2.69 6 6 6 6-2.69 6-6-2.69-6-6-6zm-1 16.95h2V19.5h-2v2.95zm-7.45-3.91l1.41 1.41 1.79-1.8-1.41-1.41-1.79 1.8z"/></svg>
+                            北京 22°C 晴
+                        </div>
+                        <div style="font-size:12px; opacity:0.8;">宜创作</div>
+                    </div>
+                    <div class="quote-text" id="dailyQuote">“种一棵树最好的时间是十年前，其次是现在。”</div>
+                </div>
+
                 <div class="butler-greeting">👋 主人，早上好！这是您的昨日战报：</div>
                 
-                <div class="report-section">
+                <div class="report-section" style="display:flex; flex-direction:column; gap:16px;">
                     <!-- 内容维度 -->
                     <div class="report-card">
                         <div class="report-top">
@@ -300,77 +320,165 @@
             </div>
         </div>
 
-        <!-- 2. 内容创作 Agent (六步流程) -->
+        <!-- 2. 内容创作 Agent (灵感仪表盘 + 双流程) -->
         <div class="agent-card">
             <div class="agent-header">
                 <svg class="icon" style="color: var(--primary);" viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>
                 内容创作 Agent
                 <div class="help-container">
                     <span class="help-icon">?</span>
-                    <div class="tooltip-text">全流程AI辅助：选题 -> 大纲 -> 全文 -> 配图 -> 预览 -> 发布。</div>
+                    <div class="tooltip-text">全流程AI辅助：图文6步流程，视频5步流程。支持一键发布。</div>
                 </div>
             </div>
             <div class="agent-body" style="padding: 0;">
                 
-                <!-- 顶部进度条 -->
-                <div style="padding: 20px 20px 0 20px;">
-                    <div class="step-indicator">
-                        <div class="step-dot active" id="dot1"></div>
-                        <div class="step-dot" id="dot2"></div>
-                        <div class="step-dot" id="dot3"></div>
-                        <div class="step-dot" id="dot4"></div>
-                        <div class="step-dot" id="dot5"></div>
-                        <div class="step-dot" id="dot6"></div>
+                <!-- 0. 灵感仪表盘 (初始界面) -->
+                <div id="creationDashboard" style="padding: 20px; height: 100%; display: flex; flex-direction: column;">
+                    <div class="dashboard-tabs">
+                        <div class="dash-tab active" onclick="switchDashTab(this, 'rec')">为您推荐</div>
+                        <div class="dash-tab" onclick="switchDashTab(this, 'hot')">平台热门</div>
+                    </div>
+                    
+                    <!-- 推荐内容 -->
+                    <div id="tabRec" class="rec-grid">
+                        <div class="rec-card" onclick="useRec('北京周末去哪玩')">
+                            <span class="rec-reason">📍 地理位置</span>
+                            <div class="rec-topic">北京周末去哪玩</div>
+                            <div class="rec-meta">适合本地生活类创作</div>
+                        </div>
+                        <div class="rec-card" onclick="useRec('AI手机最新评测')">
+                            <span class="rec-reason">🕒 历史创作</span>
+                            <div class="rec-topic">AI手机最新评测</div>
+                            <div class="rec-meta">延续您的科技风格</div>
+                        </div>
+                        <div class="rec-card" onclick="useRec('夏日防晒大作战')">
+                            <span class="rec-reason">🔥 时下热点</span>
+                            <div class="rec-topic">夏日防晒大作战</div>
+                            <div class="rec-meta">全网热度 500w+</div>
+                        </div>
+                        <div class="rec-card" onclick="useRec('新能源车续航实测')">
+                            <span class="rec-reason">🔥 时下热点</span>
+                            <div class="rec-topic">新能源车续航实测</div>
+                            <div class="rec-meta">全网热度 300w+</div>
+                        </div>
+                    </div>
+
+                    <!-- 热门内容 (隐藏) -->
+                    <div id="tabHot" class="rec-grid" style="display: none;">
+                        <div class="rec-card" onclick="useRec('职场生存法则')"><div class="rec-topic">#职场生存法则</div></div>
+                        <div class="rec-card" onclick="useRec('家常菜做法')"><div class="rec-topic">#家常菜做法</div></div>
+                        <div class="rec-card" onclick="useRec('搞笑萌宠瞬间')"><div class="rec-topic">#搞笑萌宠瞬间</div></div>
+                        <div class="rec-card" onclick="useRec('悬疑电影推荐')"><div class="rec-topic">#悬疑电影推荐</div></div>
+                    </div>
+
+                    <div class="create-actions">
+                        <div class="create-btn" onclick="startArticleFlow()">
+                            <svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z" fill="currentColor"/></svg>
+                            <span>开始图文创作</span>
+                        </div>
+                        <div class="create-btn" onclick="startVideoFlow()">
+                            <svg viewBox="0 0 24 24"><path d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z" fill="currentColor"/></svg>
+                            <span>开始视频创作</span>
+                        </div>
                     </div>
                 </div>
 
-                <!-- 阶段 1: 选题 -->
-                <div id="stage1" class="creation-stage" style="padding: 20px;">
-                    <div class="stage-title">第一步：确定选题</div>
-                    <input type="text" class="gui-input" id="topicInput" placeholder="输入您的创作灵感，例如：2024年AI手机发展趋势">
-                    <button class="action-btn" onclick="nextStage(2)">生成大纲</button>
-                </div>
-
-                <!-- 阶段 2: 大纲 -->
-                <div id="stage2" class="creation-stage" style="display: none; padding: 20px;">
-                    <div class="stage-title">第二步：确认大纲</div>
-                    <div class="ai-preview-box" id="outlineBox">AI 正在思考大纲架构...</div>
-                    <button class="action-btn" onclick="nextStage(3)">生成全文</button>
-                    <button class="action-btn secondary" onclick="prevStage(1)">修改选题</button>
-                </div>
-
-                <!-- 阶段 3: 全文 -->
-                <div id="stage3" class="creation-stage" style="display: none; padding: 20px;">
-                    <div class="stage-title">第三步：生成正文</div>
-                    <div class="ai-preview-box" id="contentBox">AI 正在撰写详细内容...</div>
-                    <button class="action-btn" onclick="nextStage(4)">智能配图</button>
-                    <button class="action-btn secondary" onclick="prevStage(2)">调整大纲</button>
-                </div>
-
-                <!-- 阶段 4: 配图 -->
-                <div id="stage4" class="creation-stage" style="display: none; padding: 20px;">
-                    <div class="stage-title">第四步：配图成品</div>
-                    <div class="ai-preview-box" id="imageBox">AI 正在匹配高清素材...</div>
-                    <button class="action-btn" onclick="nextStage(5)">生成预览</button>
-                    <button class="action-btn secondary" onclick="prevStage(3)">修改正文</button>
-                </div>
-
-                <!-- 阶段 5: 预览 -->
-                <div id="stage5" class="creation-stage" style="display: none; padding: 20px;">
-                    <div class="stage-title">第五步：最终预览</div>
-                    <div class="ai-preview-box" id="finalPreview" style="background: #fff; border: 1px solid var(--primary);">
-                        <!-- 最终内容容器 -->
+                <!-- 1. 图文流程 (6步) -->
+                <div id="articleFlow" class="flow-container">
+                    <div style="padding: 20px 20px 0 20px;">
+                        <div class="step-indicator">
+                            <div class="step-dot active" id="a_dot1"></div>
+                            <div class="step-dot" id="a_dot2"></div>
+                            <div class="step-dot" id="a_dot3"></div>
+                            <div class="step-dot" id="a_dot4"></div>
+                            <div class="step-dot" id="a_dot5"></div>
+                            <div class="step-dot" id="a_dot6"></div>
+                        </div>
                     </div>
-                    <button class="action-btn" style="background: var(--success);" onclick="nextStage(6)">确认发布</button>
-                    <button class="action-btn secondary" onclick="prevStage(4)">重新配图</button>
+                    
+                    <!-- 步骤内容容器 -->
+                    <div id="a_stage1" class="stage-content">
+                        <div class="stage-title">第一步：确定选题</div>
+                        <input type="text" class="gui-input" id="a_topicInput" placeholder="输入图文主题...">
+                        <button class="action-btn" onclick="nextArticleStep(2)">生成大纲</button>
+                        <button class="action-btn secondary" onclick="exitCreation()">返回仪表盘</button>
+                    </div>
+                    <div id="a_stage2" class="stage-content" style="display:none;">
+                        <div class="stage-title">第二步：确认大纲</div>
+                        <div class="ai-preview-box" id="a_outlineBox">AI 正在构建大纲...</div>
+                        <button class="action-btn" onclick="nextArticleStep(3)">生成全文</button>
+                        <button class="action-btn secondary" onclick="prevArticleStep(1)">修改选题</button>
+                    </div>
+                    <div id="a_stage3" class="stage-content" style="display:none;">
+                        <div class="stage-title">第三步：生成正文</div>
+                        <div class="ai-preview-box" id="a_contentBox">AI 正在撰写...</div>
+                        <button class="action-btn" onclick="nextArticleStep(4)">智能配图</button>
+                        <button class="action-btn secondary" onclick="prevArticleStep(2)">调整大纲</button>
+                    </div>
+                    <div id="a_stage4" class="stage-content" style="display:none;">
+                        <div class="stage-title">第四步：配图成品</div>
+                        <div class="ai-preview-box" id="a_imageBox">AI 正在匹配图片...</div>
+                        <button class="action-btn" onclick="nextArticleStep(5)">生成预览</button>
+                        <button class="action-btn secondary" onclick="prevArticleStep(3)">修改正文</button>
+                    </div>
+                    <div id="a_stage5" class="stage-content" style="display:none;">
+                        <div class="stage-title">第五步：最终预览</div>
+                        <div class="ai-preview-box" id="a_finalPreview" style="background:#fff; border-color:var(--primary);"></div>
+                        <button class="action-btn" style="background:var(--success);" onclick="nextArticleStep(6)">确认发布</button>
+                        <button class="action-btn secondary" onclick="prevArticleStep(4)">重新配图</button>
+                    </div>
+                    <div id="a_stage6" class="stage-content" style="display:none; text-align:center;">
+                        <svg style="width:64px;height:64px;color:var(--success);margin:0 auto 20px;" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" fill="currentColor"/></svg>
+                        <h3>图文发布成功！</h3>
+                        <button class="action-btn secondary" style="margin-top:30px;" onclick="exitCreation()">完成</button>
+                    </div>
                 </div>
 
-                <!-- 阶段 6: 发布成功 -->
-                <div id="stage6" class="creation-stage" style="display: none; padding: 40px; text-align: center; justify-content: center;">
-                    <svg style="width: 64px; height: 64px; color: var(--success); margin: 0 auto 20px;" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" fill="currentColor"/></svg>
-                    <h3>发布成功！</h3>
-                    <p style="color: var(--text-secondary); margin-top: 10px;">您的内容已提交审核，即将分发至推荐流。</p>
-                    <button class="action-btn secondary" style="margin-top: 30px;" onclick="resetCreation()">开始新的创作</button>
+                <!-- 2. 视频流程 (5步: 选题-脚本-生成-预览-发布) -->
+                <div id="videoFlow" class="flow-container">
+                    <div style="padding: 20px 20px 0 20px;">
+                        <div class="step-indicator">
+                            <div class="step-dot active" id="v_dot1"></div>
+                            <div class="step-dot" id="v_dot2"></div>
+                            <div class="step-dot" id="v_dot3"></div>
+                            <div class="step-dot" id="v_dot4"></div>
+                            <div class="step-dot" id="v_dot5"></div>
+                        </div>
+                    </div>
+
+                    <div id="v_stage1" class="stage-content">
+                        <div class="stage-title">第一步：确定视频选题</div>
+                        <input type="text" class="gui-input" id="v_topicInput" placeholder="输入视频主题...">
+                        <button class="action-btn" onclick="nextVideoStep(2)">生成脚本</button>
+                        <button class="action-btn secondary" onclick="exitCreation()">返回仪表盘</button>
+                    </div>
+                    <div id="v_stage2" class="stage-content" style="display:none;">
+                        <div class="stage-title">第二步：确认脚本</div>
+                        <div class="ai-preview-box" id="v_scriptBox">AI 正在编写分镜脚本...</div>
+                        <button class="action-btn" onclick="nextVideoStep(3)">生成视频</button>
+                        <button class="action-btn secondary" onclick="prevVideoStep(1)">修改选题</button>
+                    </div>
+                    <div id="v_stage3" class="stage-content" style="display:none;">
+                        <div class="stage-title">第三步：视频生成中</div>
+                        <div class="ai-preview-box" style="text-align:center; padding-top:40px;">
+                            <svg class="icon" style="width:40px;height:40px;animation:spin 1s infinite linear;color:var(--primary);" viewBox="0 0 24 24"><path d="M12 4V2C6.48 2 2 6.48 2 12h2c0-4.41 3.59-8 8-8zm0 14c-4.41 0-8-3.59-8-8H2c0 5.52 4.48 10 10 10v-2zm8-6h2c0-5.52-4.48-10-10-10v2c4.41 0 8 3.59 8 8zm-2 0c0 3.31-2.69 6-6 6v2c4.42 0 8-3.58 8-8h-2z" fill="currentColor"/></svg>
+                            <div style="margin-top:10px;">AI 正在合成画面与语音...</div>
+                        </div>
+                        <button class="action-btn" style="opacity:0.5; cursor:wait;">处理中...</button>
+                    </div>
+                    <div id="v_stage4" class="stage-content" style="display:none;">
+                        <div class="stage-title">第四步：视频预览</div>
+                        <div class="ai-preview-box" id="v_finalPreview" style="background:#000; color:#fff; display:flex; align-items:center; justify-content:center;">
+                            <svg style="width:48px;height:48px;" viewBox="0 0 24 24"><path d="M8 5v14l11-7z" fill="currentColor"/></svg>
+                        </div>
+                        <button class="action-btn" style="background:var(--success);" onclick="nextVideoStep(5)">确认发布</button>
+                        <button class="action-btn secondary" onclick="prevVideoStep(2)">重新生成</button>
+                    </div>
+                    <div id="v_stage5" class="stage-content" style="display:none; text-align:center;">
+                        <svg style="width:64px;height:64px;color:var(--success);margin:0 auto 20px;" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" fill="currentColor"/></svg>
+                        <h3>视频发布成功！</h3>
+                        <button class="action-btn secondary" style="margin-top:30px;" onclick="exitCreation()">完成</button>
+                    </div>
                 </div>
 
             </div>
@@ -460,7 +568,16 @@
     </div>
 
     <script>
-        // --- 1. 主题切换 ---
+        // --- 1. 每日播报 (鸡汤) ---
+        const quotes = [
+            "“种一棵树最好的时间是十年前，其次是现在。”",
+            "“星光不问赶路人，时光不负有心人。”",
+            "“每一次创作，都是与世界的一次深度对话。”",
+            "“坚持不是因为看到希望才坚持，而是坚持了才能看到希望。”"
+        ];
+        document.getElementById('dailyQuote').innerText = quotes[Math.floor(Math.random() * quotes.length)];
+
+        // --- 2. 主题切换 ---
         function toggleTheme() {
             const html = document.documentElement;
             const current = html.getAttribute('data-theme');
@@ -475,61 +592,89 @@
             }
         }
 
-        // --- 2. 创作 Agent (六步流程逻辑) ---
-        let currentStep = 1;
-        let topic = "";
+        // --- 3. 创作 Agent (仪表盘 & 双流程) ---
+        function switchDashTab(el, tab) {
+            document.querySelectorAll('.dash-tab').forEach(t => t.classList.remove('active'));
+            el.classList.add('active');
+            document.getElementById('tabRec').style.display = tab === 'rec' ? 'grid' : 'none';
+            document.getElementById('tabHot').style.display = tab === 'hot' ? 'grid' : 'none';
+        }
 
-        function updateDots(step) {
+        function useRec(topic) {
+            // 默认进入图文流程
+            startArticleFlow();
+            setTimeout(() => {
+                document.getElementById('a_topicInput').value = topic;
+            }, 100);
+        }
+
+        function exitCreation() {
+            document.getElementById('articleFlow').style.display = 'none';
+            document.getElementById('videoFlow').style.display = 'none';
+            document.getElementById('creationDashboard').style.display = 'flex';
+        }
+
+        // 图文流程
+        function startArticleFlow() {
+            document.getElementById('creationDashboard').style.display = 'none';
+            document.getElementById('articleFlow').style.display = 'flex';
+            nextArticleStep(1);
+        }
+
+        function nextArticleStep(step) {
+            // 隐藏所有步骤
+            for(let i=1; i<=6; i++) document.getElementById(`a_stage${i}`).style.display = 'none';
+            // 显示当前
+            document.getElementById(`a_stage${step}`).style.display = 'flex';
+            // 更新进度条
             for(let i=1; i<=6; i++) {
-                const dot = document.getElementById(`dot${i}`);
+                const dot = document.getElementById(`a_dot${i}`);
                 dot.className = 'step-dot';
                 if(i < step) dot.classList.add('done');
                 if(i === step) dot.classList.add('active');
             }
+
+            // 模拟逻辑
+            if(step === 2) {
+                const topic = document.getElementById('a_topicInput').value;
+                document.getElementById('a_outlineBox').innerHTML = `AI 正在基于“${topic}”构建大纲...<br><br>1. 引言：背景与现状<br>2. 核心观点阐述<br>3. 案例分析<br>4. 总结与展望`;
+            }
+            if(step === 3) document.getElementById('a_contentBox').innerHTML = `AI 正在撰写正文...<br><br>（已生成 800 字）...随着技术的迭代，这一趋势愈发明显...`;
+            if(step === 4) document.getElementById('a_imageBox').innerHTML = `AI 正在匹配高清素材...<br><br>✅ 封面图已生成<br>✅ 插图1已匹配`;
+            if(step === 5) document.getElementById('a_finalPreview').innerHTML = `<div style="text-align:center;padding:20px;color:#999;">[图文预览效果]</div>`;
+        }
+        function prevArticleStep(step) { nextArticleStep(step); }
+
+        // 视频流程
+        function startVideoFlow() {
+            document.getElementById('creationDashboard').style.display = 'none';
+            document.getElementById('videoFlow').style.display = 'flex';
+            nextVideoStep(1);
         }
 
-        function nextStage(step) {
-            // 隐藏所有
-            for(let i=1; i<=6; i++) {
-                document.getElementById(`stage${i}`).style.display = 'none';
+        function nextVideoStep(step) {
+            for(let i=1; i<=5; i++) document.getElementById(`v_stage${i}`).style.display = 'none';
+            document.getElementById(`v_stage${step}`).style.display = 'flex';
+            for(let i=1; i<=5; i++) {
+                const dot = document.getElementById(`v_dot${i}`);
+                dot.className = 'step-dot';
+                if(i < step) dot.classList.add('done');
+                if(i === step) dot.classList.add('active');
             }
-            
-            // 显示当前
-            document.getElementById(`stage${step}`).style.display = 'flex';
-            currentStep = step;
-            updateDots(step);
 
-            // 逻辑处理
             if(step === 2) {
-                topic = document.getElementById('topicInput').value;
-                if(!topic) { alert("请输入主题"); prevStage(1); return; }
-                document.getElementById('outlineBox').innerHTML = `AI 正在基于主题“${topic}”构建大纲...<br><br>1. 引言：行业背景分析<br>2. 核心技术突破点<br>3. 市场影响与预测<br>4. 总结`;
+                const topic = document.getElementById('v_topicInput').value;
+                document.getElementById('v_scriptBox').innerHTML = `AI 正在为“${topic}”编写分镜脚本...<br><br>[镜头1] 全景，配乐激昂<br>[镜头2] 特写，展示细节`;
             }
             if(step === 3) {
-                document.getElementById('contentBox').innerHTML = `AI 正在撰写正文...<br><br>随着人工智能技术的飞速发展，2024年被视为AI手机元年。各大厂商纷纷布局... (已生成 1200 字)`;
-            }
-            if(step === 4) {
-                document.getElementById('imageBox').innerHTML = `AI 正在分析文本并匹配图片...<br><br>✅ 匹配封面图 (科技感/蓝色调)<br>✅ 匹配插图 1 (数据图表)<br>✅ 匹配插图 2 (产品渲染图)`;
-            }
-            if(step === 5) {
-                document.getElementById('finalPreview').innerHTML = `
-                    <div style="width:100%; height:150px; background:#eee; display:flex; align-items:center; justify-content:center; color:#999; margin-bottom:10px;">[封面图预览]</div>
-                    <h3 style="margin-bottom:10px;">${topic}</h3>
-                    <p style="font-size:13px; color:#666;">这里是最终生成的文章预览内容。排版已自动优化，图片已插入合适位置...</p>
-                `;
+                // 模拟等待
+                setTimeout(() => nextVideoStep(4), 2000);
             }
         }
+        function prevVideoStep(step) { nextVideoStep(step); }
 
-        function prevStage(step) {
-            nextStage(step);
-        }
 
-        function resetCreation() {
-            document.getElementById('topicInput').value = '';
-            nextStage(1);
-        }
-
-        // --- 3. 认证 -> 账号变形逻辑 ---
+        // --- 4. 认证 -> 账号变形逻辑 ---
         function uploadMaterial() {
             const txt = document.getElementById('uploadText');
             txt.innerText = "正在上传并识别...";
@@ -544,8 +689,7 @@
             }, 1500);
         }
 
-        // --- 4. 客服逻辑 (热情主动) ---
-        // 初始化欢迎语
+        // --- 5. 客服逻辑 (热情主动) ---
         window.onload = function() {
             const chat = document.getElementById('csChat');
             chat.innerHTML = `<div class="cs-msg sys">👋 嗨！我是您的专属客服助手！<br>有什么创作上的烦恼，或者平台规则不清楚的，随时问我哦！✨</div>`;
